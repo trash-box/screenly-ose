@@ -13,7 +13,16 @@ body {
 label {
   text-align: right; }
 
+.bg-yellow {
+  background-color: #ffd500;
+}
+
+* {
+  cursor: none;
+}
+
 .splash {
+  background-color: #ffd500;
   margin-top: 0;
   font-size: calc((1.5vw + 1.5vh) / 2); }
   .splash .row {

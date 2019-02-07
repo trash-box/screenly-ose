@@ -23,6 +23,10 @@ from flask import Flask, make_response, render_template, request, send_from_dire
 from flask_cors import CORS
 from flask_restful_swagger_2 import Api, Resource, Schema, swagger
 from flask_swagger_ui import get_swaggerui_blueprint
+from flask_socketio import SocketIO, emit
+
+import paho.mqtt.client as mqtt
+import threading, datetime
 
 from gunicorn.app.base import Application
 from werkzeug.wrappers import Request
@@ -48,6 +52,51 @@ DISABLE_MANAGE_NETWORK = '.screenly/disable_manage_network'
 app = Flask(__name__)
 CORS(app)
 api = Api(app, api_version="v1", title="Screenly OSE API")
+
+socketio = SocketIO(app)
+
+
+@socketio.on('value changed')
+def value_changed(message):
+    values[message['who']] = message['data']
+    emit('update value', message, broadcast=True)
+
+def on_mqtt_connect(client, userdata, flags, rc):
+    print("Connected with result code " + str(rc))
+
+    client.subscribe("$SYS/broker/clients/#")
+
+def on_mqtt_mesage(client, userdata, msg):
+    if msg.topic == '$SYS/broker/clients/active':
+        print(msg.topic + " " + str(msg.payload))
+        try:
+            socketio.emit('message', {'data': str(msg.payload), 'time': str(datetime.datetime.utcnow())}, namespace='/test')
+        except:
+            print("Error: " + sys.exc_info()[0])
+
+@socketio.on('my event', namespace='/test')
+def my_event(msg):
+    print("my event: " + msg['data'])
+
+@socketio.on('connect', namespace='/test')
+def test_connect():
+    print("client connected")
+    emit('message xy', {'data': 'Connected ' + str(datetime.datetime.utcnow()), 'count': 0, 'time': str(datetime.datetime.utcnow())}, namesace='/test', broadcast=True)
+
+@socketio.on('disconnect', namespace='/test')
+def test_disconnect():
+    print('Client disconnected')
+
+def mqttClient():
+    c = mqtt.Client()
+    c.on_connect = on_mqtt_connect
+    c.on_message = on_mqtt_mesage
+    print("mal schauen")
+    c.connect("192.168.1.10", 1883, 60)
+
+    c.loop_forever()
+
+
 
 
 ################################
@@ -1155,104 +1204,24 @@ def viewIndex():
 
     return template('index.html', ws_addresses=ws_addresses, player_name=player_name, is_demo=is_demo)
 
+def getserial():
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:6]=='Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR00000000000"
+    return cpuserial
 
-@app.route('/settings', methods=["GET", "POST"])
-@auth_basic
-def settings_page():
-    context = {'flash': None}
+@app.route('/dps')
+def viewDps():
+    player_id = getserial()
 
-    if request.method == "POST":
-        try:
-            # put some request variables in local variables to make easier to read
-            current_pass = request.form.get('curpassword', '')
-            new_pass = request.form.get('password', '')
-            new_pass2 = request.form.get('password2', '')
-            current_pass = '' if current_pass == '' else hashlib.sha256(current_pass).hexdigest()
-            new_pass = '' if new_pass == '' else hashlib.sha256(new_pass).hexdigest()
-            new_pass2 = '' if new_pass2 == '' else hashlib.sha256(new_pass2).hexdigest()
-
-            new_user = request.form.get('user', '')
-            use_auth = request.form.get('use_auth', '') == 'on'
-
-            # Handle auth components
-            if settings['password'] != '':  # if password currently set,
-                if new_user != settings['user']:  # trying to change user
-                    # should have current password set. Optionally may change password.
-                    if current_pass == '':
-                        if not use_auth:
-                            raise ValueError("Must supply current password to disable authentication")
-                        raise ValueError("Must supply current password to change username")
-                    if current_pass != settings['password']:
-                        raise ValueError("Incorrect current password.")
-
-                    settings['user'] = new_user
-
-                if new_pass != '' and use_auth:
-                    if current_pass == '':
-                        raise ValueError("Must supply current password to change password")
-                    if current_pass != settings['password']:
-                        raise ValueError("Incorrect current password.")
-
-                    if new_pass2 != new_pass:  # changing password
-                        raise ValueError("New passwords do not match!")
-
-                    settings['password'] = new_pass
-
-                if new_pass == '' and not use_auth and new_pass2 == '':
-                    # trying to disable authentication
-                    if current_pass == '':
-                        raise ValueError("Must supply current password to disable authentication")
-                    settings['password'] = ''
-
-            else:  # no current password
-                if new_user != '':  # setting username and password
-                    if new_pass != '' and new_pass != new_pass2:
-                        raise ValueError("New passwords do not match!")
-                    if new_pass == '':
-                        raise ValueError("Must provide password")
-                    settings['user'] = new_user
-                    settings['password'] = new_pass
-
-            for field, default in CONFIGURABLE_SETTINGS.items():
-                value = request.form.get(field, default)
-
-                # skip user and password as they should be handled already.
-                if field == "user" or field == "password":
-                    continue
-
-                if not value and field in ['default_duration', 'default_streaming_duration']:
-                    value = str(0)
-
-                if isinstance(default, bool):
-                    value = value == 'on'
-                settings[field] = value
-
-            settings.save()
-            publisher = ZmqPublisher.get_instance()
-            publisher.send_to_viewer('reload')
-            context['flash'] = {'class': "success", 'message': "Settings were successfully saved."}
-        except ValueError as e:
-            context['flash'] = {'class': "danger", 'message': e}
-        except IOError as e:
-            context['flash'] = {'class': "danger", 'message': e}
-        except OSError as e:
-            context['flash'] = {'class': "danger", 'message': e}
-    else:
-        settings.load()
-    for field, default in DEFAULTS['viewer'].items():
-        context[field] = settings[field]
-
-    context['user'] = settings['user']
-    context['password'] = "password" if settings['password'] != "" else ""
-
-    context['reset_button_state'] = "disabled" if path.isfile(path.join(HOME, DISABLE_MANAGE_NETWORK)) else ""
-
-    if not settings['user'] or not settings['password']:
-        context['use_auth'] = False
-    else:
-        context['use_auth'] = True
-
-    return template('settings.html', **context)
+    return template('dps.html', ip_lookup=True, msg=player_id)
 
 
 @app.route('/system_info')
@@ -1293,29 +1262,6 @@ def system_info():
         display_power=display_power
     )
 
-
-@app.route('/splash_page')
-def splash_page():
-    url = None
-    try:
-        my_ip = get_node_ip()
-    except Exception as e:
-        ip_lookup = False
-        error_msg = e
-    else:
-        ip_lookup = True
-
-        if settings['use_ssl']:
-            url = 'https://{}'.format(my_ip)
-        elif LISTEN == '127.0.0.1':
-            url = "http://{}".format(my_ip)
-        else:
-            url = "http://{}:{}".format(my_ip, PORT)
-
-    msg = url if url else error_msg
-    return template('splash_page.html', ip_lookup=ip_lookup, msg=msg)
-
-
 @app.errorhandler(403)
 def mistake403(code):
     return 'The parameter you passed has the wrong format!'
@@ -1324,34 +1270,6 @@ def mistake403(code):
 @app.errorhandler(404)
 def mistake404(code):
     return 'Sorry, this page does not exist!'
-
-
-################################
-# Static
-################################
-
-
-@app.context_processor
-def override_url_for():
-    return dict(url_for=dated_url_for)
-
-
-def dated_url_for(endpoint, **values):
-    if endpoint == 'static':
-        filename = values.get('filename', None)
-        if filename:
-            file_path = path.join(app.root_path,
-                                  endpoint, filename)
-            if path.isfile(file_path):
-                values['q'] = int(stat(file_path).st_mtime)
-    return url_for(endpoint, **values)
-
-
-@app.route('/static_with_mime/<string:path>')
-@auth_basic
-def static_with_mime(path):
-    mimetype = request.args['mime'] if 'mime' in request.args else 'auto'
-    return send_from_directory(directory='static', filename=path, mimetype=mimetype)
 
 
 if __name__ == "__main__":
@@ -1373,6 +1291,9 @@ if __name__ == "__main__":
         'threads': 2,
         'timeout': 20
     }
+
+    t1 = threading.Thread(target=mqttClient)
+    t1.start()
 
     class GunicornApplication(Application):
         def init(self, parser, opts, args):
