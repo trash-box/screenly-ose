@@ -23,12 +23,21 @@
             socket.on('message', function(msg){
                 console.log('values: ' + msg.data.values);
                 var data = JSON.parse(msg.data);
-                $.each(data.values, function(idx, val) {
-                  console.log(idx);
-                  $('#val' + (idx+1)).html(val);
-                });
-  
-  //              $('#test').html('<p>' + msg.data + '</p>');             
+
+                if (!data.values || data.values.length == 0)
+                {
+                    $('.grid').hide();
+                    $('.container').show();
+                }
+                else
+                {
+                    $('.grid').show();
+                    $.each(data.values, function(idx, val) {
+                        console.log(idx);
+                        $('#val' + (idx+1)).html(val);
+                    });
+                    $('.container').hide();
+                }
             });
         });
     </script>
@@ -52,15 +61,12 @@
             </div>
         </div>
         <div class="grid__item panel-4">
-            <div class="content"><!--
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360.96 358.98">
-                <text>Hinwil AZS</text>
-            </svg>-->
+            <div class="content">
             <h1 id="val4">4</h1>
             </div>
         </div>
     </div>
-    <!--<div class="container">
+    <div class="container">
         <div class="row">
             <div class="col-12">
                 <div class="logo-container page-header text-center">
@@ -81,6 +87,6 @@
             </div>
         </div>
         <hr/>
-    </div>-->
+    </div>
 </body>
 </html>
