@@ -64,13 +64,21 @@ def value_changed(message):
 def on_mqtt_connect(client, userdata, flags, rc):
     print("Connected with result code " + str(rc))
 
+    data = {}
+    data['client-id'] = getserial()
+
+    client.loop_start()
+
     client.subscribe("$SYS/broker/clients/#")
+
+    client.publish("$SYS/broker/clients/connected", json.dumps(data))
 
 def on_mqtt_mesage(client, userdata, msg):
     if msg.topic == '$SYS/broker/clients/active':
         print(msg.topic + " " + str(msg.payload))
         try:
-            socketio.emit('message', {'data': str(msg.payload), 'time': str(datetime.datetime.utcnow())}, namespace='/test')
+            #socketio.emit('message', {'data': str(msg.payload), 'time': str(datetime.datetime.utcnow())}, namespace='/test')
+            socketio.emit('message', 'hallo')
         except:
             print("Error: " + sys.exc_info()[0])
 
@@ -87,16 +95,18 @@ def test_connect():
 def test_disconnect():
     print('Client disconnected')
 
+c = mqtt.Client()
+
 def mqttClient():
-    c = mqtt.Client()
     c.on_connect = on_mqtt_connect
     c.on_message = on_mqtt_mesage
-    print("mal schauen")
-    c.connect("192.168.1.10", 1883, 60)
 
-    c.loop_forever()
+    data = {}
+    data['client-id'] = getserial()
+    c.will_set("$SYS/broker/clients/disconnected", json.dumps(data), retain=False)
 
-
+    c.connect_async("192.168.79.14")
+    c.loop_start()
 
 
 ################################
@@ -1292,8 +1302,10 @@ if __name__ == "__main__":
         'timeout': 20
     }
 
-    t1 = threading.Thread(target=mqttClient)
-    t1.start()
+    #t1 = threading.Thread(target=mqttClient)
+    #t1.start()
+
+    mqttClient()
 
     class GunicornApplication(Application):
         def init(self, parser, opts, args):
@@ -1302,4 +1314,8 @@ if __name__ == "__main__":
         def load(self):
             return app
 
+    socketio.run(app, host='0.0.0.0')
+
     GunicornApplication().run()
+
+    client.loop_stop()
