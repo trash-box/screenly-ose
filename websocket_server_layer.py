@@ -1,54 +1,79 @@
-from gevent import pywsgi
-from geventwebsocket import WebSocketError
-from geventwebsocket.handler import WebSocketHandler
-from threading import Thread
-import zmq.green as zmq
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 
-from settings import settings
+from flask import Flask
+from flask_socketio import SocketIO, emit
+import paho.mqtt.client as mqtt
+import json, datetime
 
+app = Flask(__name__)
+socketio = SocketIO(app)
 
-class WebSocketTranslator(object):
-    def __init__(self, context):
-        self.context = context
+def getserial():
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:6]=='Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR00000000000"
+    return cpuserial
 
-    def __call__(self, environ, start_response):
-        ws = environ['wsgi.websocket']
-        socket = self.context.socket(zmq.SUB)
-        socket.setsockopt(zmq.SUBSCRIBE, "ws_server")
-        socket.connect('inproc://queue')
+@socketio.on('value changed')
+def value_changed(message):
+    values[message['who']] = message['data']
+    emit('update value', message, broadcast=True)
+
+def on_mqtt_connect(client, userdata, flags, rc):
+    print("Connected")
+
+    data = {}
+    data['client-id'] = getserial()
+
+    client.loop_start()
+
+    client.subscribe("/dps/clients/#")
+
+    client.publish("/dps/clients/connected", json.dumps(data))
+
+def on_mqtt_mesage(client, userdata, msg):
+    print("mqtt_message: " + msg.topic + " " + str(msg.payload))
+    if msg.topic == '/dps/clients/message':
+        print(msg.topic + " " + str(msg.payload))
         try:
-            while True:
-                msg = socket.recv()
-                topic, message = msg.split()
-                ws.send(message)
-        except WebSocketError:
-            ws.close()
+            socketio.emit('message', {'data': str(msg.payload), 'time': str(datetime.datetime.utcnow())}, namespace='/test')
+        except:
+            print("Error: " + sys.exc_info()[0])
 
+@socketio.on('my event', namespace='/test')
+def my_event(msg):
+    print("my event: " + msg['data'])
 
-class ScreenlyServerListener(Thread):
-    def __init__(self, context):
-        Thread.__init__(self)
-        self.context = context
+@socketio.on('connect', namespace='/test')
+def test_connect():
+    print("client connected")
+    emit('message xy', {'data': 'Connected ' + str(datetime.datetime.utcnow()), 'count': 0, 'time': str(datetime.datetime.utcnow())}, namesace='/test', broadcast=True)
 
-    def run(self):
-        socket_incoming = self.context.socket(zmq.SUB)
-        socket_outgoing = self.context.socket(zmq.PUB)
+@socketio.on('disconnect', namespace='/test')
+def test_disconnect():
+    print('Client disconnected')
 
-        socket_incoming.connect('tcp://127.0.0.1:10001')
-        socket_outgoing.bind('inproc://queue')
+c = mqtt.Client(protocol=mqtt.MQTTv31)
 
-        socket_incoming.setsockopt(zmq.SUBSCRIBE, "")
-        while True:
-            msg = socket_incoming.recv()
-            socket_outgoing.send(msg)
+def mqttClient():
+    c.on_connect = on_mqtt_connect
+    c.on_message = on_mqtt_mesage
 
+    data = {}
+    data['client-id'] = getserial()
+    c.will_set("/dps/clients/disconnected", json.dumps(data), retain=False)
+    print("mqtt connect_async")
+    c.connect_async("192.168.1.10", keepalive=10)
+    c.loop_start()
 
 if __name__ == "__main__":
-    context = zmq.Context()
-    listener = ScreenlyServerListener(context)
-    listener.start()
-
-    port = int(settings['websocket_port'])
-    server = pywsgi.WSGIServer(("", port), WebSocketTranslator(context),
-                               handler_class=WebSocketHandler)
-    server.serve_forever()
+    mqttClient()
+    socketio.run(app)

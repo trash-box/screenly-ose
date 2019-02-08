@@ -53,61 +53,6 @@ app = Flask(__name__)
 CORS(app)
 api = Api(app, api_version="v1", title="Screenly OSE API")
 
-socketio = SocketIO(app)
-
-
-@socketio.on('value changed')
-def value_changed(message):
-    values[message['who']] = message['data']
-    emit('update value', message, broadcast=True)
-
-def on_mqtt_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
-
-    data = {}
-    data['client-id'] = getserial()
-
-    client.loop_start()
-
-    client.subscribe("$SYS/broker/clients/#")
-
-    client.publish("$SYS/broker/clients/connected", json.dumps(data))
-
-def on_mqtt_mesage(client, userdata, msg):
-    if msg.topic == '$SYS/broker/clients/active':
-        print(msg.topic + " " + str(msg.payload))
-        try:
-            #socketio.emit('message', {'data': str(msg.payload), 'time': str(datetime.datetime.utcnow())}, namespace='/test')
-            socketio.emit('message', 'hallo')
-        except:
-            print("Error: " + sys.exc_info()[0])
-
-@socketio.on('my event', namespace='/test')
-def my_event(msg):
-    print("my event: " + msg['data'])
-
-@socketio.on('connect', namespace='/test')
-def test_connect():
-    print("client connected")
-    emit('message xy', {'data': 'Connected ' + str(datetime.datetime.utcnow()), 'count': 0, 'time': str(datetime.datetime.utcnow())}, namesace='/test', broadcast=True)
-
-@socketio.on('disconnect', namespace='/test')
-def test_disconnect():
-    print('Client disconnected')
-
-c = mqtt.Client()
-
-def mqttClient():
-    c.on_connect = on_mqtt_connect
-    c.on_message = on_mqtt_mesage
-
-    data = {}
-    data['client-id'] = getserial()
-    c.will_set("$SYS/broker/clients/disconnected", json.dumps(data), retain=False)
-
-    c.connect_async("192.168.79.14")
-    c.loop_start()
-
 
 ################################
 # Utilities
@@ -1302,11 +1247,6 @@ if __name__ == "__main__":
         'timeout': 20
     }
 
-    #t1 = threading.Thread(target=mqttClient)
-    #t1.start()
-
-    mqttClient()
-
     class GunicornApplication(Application):
         def init(self, parser, opts, args):
             return config
@@ -1314,8 +1254,6 @@ if __name__ == "__main__":
         def load(self):
             return app
 
-    socketio.run(app, host='0.0.0.0')
+    #socketio.run(app, host='0.0.0.0', debug=False, port=5000)
 
     GunicornApplication().run()
-
-    client.loop_stop()

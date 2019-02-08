@@ -21,8 +21,9 @@
             });
             
             socket.on('message', function(msg){
-                console.log('message: ' + msg)
-                $.each(msg.values, function(idx, val) {
+                console.log('values: ' + msg.data.values);
+                var data = JSON.parse(msg.data);
+                $.each(data.values, function(idx, val) {
                   console.log(idx);
                   $('#val' + (idx+1)).html(val);
                 });
