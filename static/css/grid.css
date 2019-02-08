@@ -12,6 +12,7 @@
     height: 100vh;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    grid-auto-rows: 1fr;
     border-top: 1px solid black;
     border-left: 1px solid black;
     cursor: none;
@@ -25,6 +26,8 @@
     justify-content: center;
     border-right: 1px solid black;
     border-bottom: 1px solid black;
+    overflow: hidden;
+    cursor: none;
     }
 
     h1 {
