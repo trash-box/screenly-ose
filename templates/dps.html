@@ -3,9 +3,35 @@
 <head>
     <meta charset="utf-8"/>
     <title>DPS</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.1.1/socket.io.js" type="text/javascript"></script>
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='css/screenly.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='css/grid.css') }}" rel="stylesheet"/>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+            namespace = '/test'; // change to an empty string to use the global namespace
+            // the socket.io documentation recommends sending an explicit package upon connection
+            // this is specially important when using the global namespace
+            var socket = io('http://' + document.domain + ':' + location.port + namespace);
+            
+            socket.on('connect', function(msg) {
+                console.log('connected');
+                socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+            
+            socket.on('message', function(msg){
+                console.log('message: ' + msg)
+                $.each(msg.values, function(idx, val) {
+                  console.log(idx);
+                  $('#val' + (idx+1)).html(val);
+                });
+  
+  //              $('#test').html('<p>' + msg.data + '</p>');             
+            });
+        });
+    </script>
+  
 </head>
 <body class="splash">
     <div class="grid">
@@ -16,12 +42,12 @@
         </div>
         <div class="grid__item panel-2">
             <div class="content">
-            <h1 id="val2"></h1>
+            <h1 id="val2">2</h1>
             </div>
         </div>
         <div class="grid__item panel-3">
             <div class="content">
-            <h1 id="val3"></h1>
+            <h1 id="val3">3</h1>
             </div>
         </div>
         <div class="grid__item panel-4">
@@ -29,7 +55,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360.96 358.98">
                 <text>Hinwil AZS</text>
             </svg>-->
-            <h1 id="val4"></h1>
+            <h1 id="val4">4</h1>
             </div>
         </div>
     </div>
