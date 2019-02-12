@@ -22,7 +22,7 @@ ExecStartPre=/usr/bin/xset -dpms
 # Don't blank the video device
 ExecStartPre=/usr/bin/xset s noblank
 
-ExecStart=/usr/bin/chromium-browser --no-first-run --noerrdialogs --disable-notifications --disable-infobar --kiosk --incognito http://localhost
+ExecStart=/usr/bin/chromium-browser --no-first-run --noerrdialogs --disable-notifications --disable-infobar --kiosk --incognito http://localhost/dps
 
 Restart=on-failure
 
