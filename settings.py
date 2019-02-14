@@ -4,12 +4,16 @@
 from os import path, getenv
 from sys import exit
 from time import sleep
-import ConfigParser
+import configparser as ConfigParser
 import logging
-from UserDict import IterableUserDict
+try:
+    from collections import UserDict as IterableUserDict
+except ImportError: # for Python 2.7
+    from UserDict import IterableUserDict
+
 from flask import request, Response
 from functools import wraps
-import zmq
+#import zmq
 import hashlib
 
 CONFIG_DIR = '.screenly/'
@@ -21,7 +25,8 @@ DEFAULTS = {
         'use_24_hour_clock': False,
         'websocket_port': '9999',
         'use_ssl': False,
-        'analytics_opt_out': False
+        'analytics_opt_out': False,
+        'dps_server': '127.0.0.1'
     },
     'viewer': {
         'player_name': '',
@@ -86,7 +91,7 @@ class ScreenlySettings(IterableUserDict):
                 if field == 'password' and self[field] != '' and len(self[field]) != 64:   # likely not a hashed password.
                     self[field] = hashlib.sha256(self[field]).hexdigest()   # hash the original password.
         except ConfigParser.Error as e:
-            logging.debug("Could not parse setting '%s.%s': %s. Using default value: '%s'." % (section, field, unicode(e), default))
+            logging.debug("Could not parse setting '%s.%s': %s. Using default value: '%s'." % (section, field, e, default))
             self[field] = default
         if field in ['database', 'assetdir']:
             self[field] = str(path.join(self.home, self[field]))
@@ -139,7 +144,7 @@ class ScreenlySettings(IterableUserDict):
 
 settings = ScreenlySettings()
 
-
+'''
 class ZmqPublisher:
     INSTANCE = None
 
@@ -164,7 +169,7 @@ class ZmqPublisher:
 
     def send_to_viewer(self, msg):
         self.socket.send_string("viewer {}".format(msg))
-
+'''
 
 def authenticate():
     realm = "Screenly OSE" + (" " + settings['player_name'] if settings['player_name'] else "")
