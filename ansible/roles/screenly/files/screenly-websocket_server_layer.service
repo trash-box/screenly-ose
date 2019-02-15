@@ -4,7 +4,7 @@ Description=Websocket Server layer
 [Service]
 WorkingDirectory=/home/pi/screenly
 User=pi
-ExecStart=/usr/bin/python /home/pi/screenly/websocket_server_layer.py
+ExecStart=/usr/local/bin/python3.7 /home/pi/screenly/dps-socket.py
 Restart=always
 
 [Install]
