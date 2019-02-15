@@ -15,8 +15,6 @@ from settings import settings
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=5)
 
-
-
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
@@ -43,6 +41,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
 
     client.loop_start()
 
+    client.subscribe("/dps/client/" + data['client-id'] + "/#")
     client.subscribe("/dps/clients/#")
 
     client.publish("/dps/clients/connected", json.dumps(data))
@@ -50,17 +49,16 @@ def on_mqtt_connect(client, userdata, flags, rc):
 def on_mqtt_mesage(client, userdata, msg):
     payload = msg.payload.decode("utf-8")
     print("mqtt_message: " + msg.topic + " " + payload)
-    if msg.topic == '/dps/clients/message':
-        print(msg.topic + " " + payload)
+    if msg.topic == '/dps/client/' + getserial() + '/message':
         try:
             socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace='/test')
         except:
             print("Error: " + sys.exc_info()[0])
     
-    elif msg.topic == '/dps/clients/restart' and str(msg.payload) == 'true':
+    elif msg.topic == '/dps/clients/restart' and payload == 'true':
         subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
 
-    elif msg.topic == '/dps/clients/rebootX':
+    elif msg.topic == '/dps/clients/reboot' and payload == 'true':
         subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
 
 @socketio.on('my event', namespace='/test')
@@ -69,7 +67,7 @@ def my_event(msg):
 
 @socketio.on('connect', namespace='/test')
 def test_connect():
-    print("client connected")
+    print("SocketIO Client connected")
     emit('message', {'data': '{"values":["","","",""]}', 'time': str(datetime.datetime.utcnow())}, namesace='/test', broadcast=True)
 
 @socketio.on('disconnect', namespace='/test')
@@ -117,4 +115,4 @@ if __name__ == "__main__":
     findDpsServer()
 
     mqttClient()
-    socketio.run(app, debug=True)
+    socketio.run(app)
