@@ -7,7 +7,6 @@ from flask import Flask, make_response, render_template, request, send_from_dire
 from flask_cors import CORS
 from flask_restful_swagger_2 import Api, Resource, Schema, swagger
 from flask_swagger_ui import get_swaggerui_blueprint
-from flask_socketio import SocketIO, emit
 
 import paho.mqtt.client as mqtt
 import threading, datetime
@@ -191,7 +190,5 @@ if __name__ == "__main__":
 
         def load(self):
             return app
-
-    #socketio.run(app, host='0.0.0.0', debug=False, port=5000)
 
     GunicornApplication().run()
