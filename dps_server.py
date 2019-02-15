@@ -75,27 +75,6 @@ def template(template_name, **context):
 
     return render_template(template_name, context=context)
 
-
-@app.route('/')
-#@auth_basic
-def viewIndex():
-    player_name = settings['player_name']
-    my_ip = get_node_ip()
-    is_demo = is_demo_node()
-    resin_uuid = getenv("RESIN_UUID", None)
-
-    ws_addresses = []
-
-    if settings['use_ssl']:
-        ws_addresses.append('wss://' + my_ip + '/ws/')
-    else:
-        ws_addresses.append('ws://' + my_ip + ':' + settings['websocket_port'])
-
-    if resin_uuid:
-        ws_addresses.append('wss://{}.resindevice.io/ws/'.format(resin_uuid))
-
-    return template('index.html', ws_addresses=ws_addresses, player_name=player_name, is_demo=is_demo)
-
 def getserial():
     # Extract serial from cpuinfo file
     cpuserial = "0000000000000000"
@@ -109,7 +88,7 @@ def getserial():
         cpuserial = "ERROR00000000000"
     return cpuserial
 
-@app.route('/dps')
+@app.route('/')
 def viewDps():
     player_id = getserial()
 
