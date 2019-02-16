@@ -37,9 +37,6 @@
     src: uzbl-config
     dest: /home/pi/.config/uzbl/config-screenly
 
-- name: Install pip dependencies
-  pip: requirements=/home/pi/screenly/requirements.txt
-
 - name: Create default assets database if does not exists
   copy:
     owner: pi
