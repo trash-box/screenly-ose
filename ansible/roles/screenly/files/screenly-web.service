@@ -6,7 +6,7 @@ After=network-online.target
 WorkingDirectory=/home/pi/screenly
 User=pi
 ExecStartPre=/usr/bin/python /home/pi/screenly/bin/wait.py
-ExecStart=/usr/local/bin/python3.7 /home/pi/screenly/dps-http.py
+ExecStart=/usr/bin/python3.5 /home/pi/screenly/dps-http.py
 Restart=always
 RestartSec=5
 Environment=PYTHONPATH=/home/pi/screenly
