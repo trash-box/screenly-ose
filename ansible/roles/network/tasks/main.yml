@@ -170,7 +170,6 @@
   file:
     state: touch
     path: "/home/pi/.screenly/initialized"
-  when: manage_network|bool != true
 
 - name: Touch disable_manage_network file
   file:
