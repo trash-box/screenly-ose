@@ -189,11 +189,6 @@
   tags:
     - system-upgrade
 
-- name: Remove deprecated pip dependencies
-  pip:
-    name: supervisor
-    state: absent
-
 - name: Copy in rc.local
   copy:
     src: rc.local
