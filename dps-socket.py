@@ -39,23 +39,23 @@ def on_mqtt_connect(client, userdata, flags, rc):
     data = {}
     data['client-id'] = getserial()
 
-    client.loop_start()
-
-    client.subscribe("/dps/client/" + data['client-id'] + "/#")
-    client.subscribe("/dps/clients/#")
-
+    client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
     client.publish("/dps/clients/connected", json.dumps(data))
 
 def on_mqtt_mesage(client, userdata, msg):
-    payload = msg.payload.decode("utf-8")
-    print("mqtt_message: " + msg.topic + " " + payload)
+    try:
+        payload = msg.payload.decode("utf-8")
+        print("mqtt_message: {} {}".format(msg.topic, msg.payload))
+    except Exception as ex:
+        print(ex)
+
     if msg.topic == '/dps/client/' + getserial() + '/message':
         try:
             socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace='/test')
         except:
             print("Error: " + sys.exc_info()[0])
     
-    elif msg.topic == '/dps/clients/restart' and payload == 'true':
+    elif msg.topic == '/dps/clients/commands/restart' and payload == 'true':
         subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
 
     elif msg.topic == '/dps/clients/reboot' and payload == 'true':
@@ -109,7 +109,6 @@ def mqttClient():
     print("mqtt connect_async " + settings['dps_server'])
     c.connect_async(settings['dps_server'], keepalive=10)
     c.loop_start()
-
 
 if __name__ == "__main__":
     findDpsServer()
