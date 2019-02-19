@@ -84,7 +84,7 @@ def viewDps():
     return template('dps.html', ip_lookup=True, msg=player_id, mqtt_namespace=get_mqtt_namespace())
 
 
-@app.route('/status')
+@app.route('/info')
 #@auth_basic
 def system_info():
     viewlog = None
@@ -108,12 +108,12 @@ def system_info():
     uptime_in_seconds = diagnostics.get_uptime()
     system_uptime = timedelta(seconds=uptime_in_seconds)
 
-    # Player name for title
-    player_name = settings['player_name']
+    # PlayerID for title
+    player_id = utils.get_serial()
 
     return template(
         'system_info.html',
-        player_name=player_name,
+        player_id=player_id,
         viewlog=viewlog,
         loadavg=loadavg,
         free_space=free_space,

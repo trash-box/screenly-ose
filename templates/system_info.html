@@ -3,10 +3,10 @@
 <head>
     <meta charset="utf-8"/>
 
-    {% if context.player_name %}
-        <title>Screenly OSE - {{ context.player_name }}</title>
+    {% if context.player_id %}
+        <title>Swiss Post DPS - {{ context.player_id }}</title>
     {% else %}
-        <title>Screenly OSE</title>
+        <title>Swiss Post DPS</title>
     {% endif %}
     <link href="{{ url_for('static', filename='css/bootstrap.min.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='css/screenly.css') }}" rel="stylesheet"/>
@@ -29,7 +29,7 @@
         <div class="col-12">
 
             <h1 class="page-header">
-                System Info
+                Client Info: {{ context.player_id }}
             </h1>
 
             <table class="table table-bordered" style="width: 100%">
