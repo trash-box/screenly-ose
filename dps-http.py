@@ -77,22 +77,9 @@ def template(template_name, **context):
 
     return render_template(template_name, context=context)
 
-def getserial():
-    # Extract serial from cpuinfo file
-    cpuserial = "0000000000000000"
-    try:
-        f = open('/proc/cpuinfo','r')
-        for line in f:
-            if line[0:6]=='Serial':
-                cpuserial = line[10:26]
-        f.close()
-    except:
-        cpuserial = "ERROR00000000000"
-    return cpuserial
-
 @app.route('/')
 def viewDps():
-    player_id = getserial()
+    player_id = utils.get_serial()
 
     return template('dps.html', ip_lookup=True, msg=player_id)
 

@@ -259,3 +259,16 @@ def generate_perfect_paper_password(pw_length=10, has_symbols=True):
     if not has_symbols:
         ppp_letters = ''.join(set(ppp_letters) - set(string.punctuation))
     return "".join(random.SystemRandom().choice(ppp_letters) for _ in range(pw_length))
+
+def get_serial():
+    # Extract serial from cpuinfo file
+    cpuserial = "0000000000000000"
+    try:
+        f = open('/proc/cpuinfo','r')
+        for line in f:
+            if line[0:6]=='Serial':
+                cpuserial = line[10:26]
+        f.close()
+    except:
+        cpuserial = "ERROR00000000000"
+    return cpuserial

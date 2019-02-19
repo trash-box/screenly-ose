@@ -11,22 +11,10 @@ import json, datetime
 import subprocess
 import socket
 from settings import settings
+from lib import utils
 
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=5)
-
-def getserial():
-    # Extract serial from cpuinfo file
-    cpuserial = "0000000000000000"
-    try:
-        f = open('/proc/cpuinfo','r')
-        for line in f:
-            if line[0:6]=='Serial':
-                cpuserial = line[10:26]
-        f.close()
-    except:
-        cpuserial = "ERROR00000000000"
-    return cpuserial
 
 @socketio.on('value changed')
 def value_changed(message):
@@ -37,7 +25,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
     print("Connected")
 
     data = {}
-    data['client-id'] = getserial()
+    data['client-id'] = utils.get_serial()
 
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
     client.publish("/dps/clients/connected", json.dumps(data))
@@ -49,7 +37,7 @@ def on_mqtt_mesage(client, userdata, msg):
     except Exception as ex:
         print(ex)
 
-    if msg.topic == '/dps/client/' + getserial() + '/message':
+    if msg.topic == '/dps/client/' + utils.get_serial() + '/message':
         try:
             socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace='/test')
         except:
@@ -81,7 +69,7 @@ def findDpsServer():
     s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, True)
     s.settimeout(5)
 
-    x = getserial()
+    x = utils.get_serial()
 
     s.sendto(bytearray.fromhex(x), ("<broadcast>", 30303))
     try:
@@ -104,7 +92,7 @@ def mqttClient():
     c.on_message = on_mqtt_mesage
 
     data = {}
-    data['client-id'] = getserial()
+    data['client-id'] = utils.get_serial()
     c.will_set("/dps/clients/disconnected", json.dumps(data), retain=False)
     print("mqtt connect_async " + settings['dps_server'])
     c.connect_async(settings['dps_server'], keepalive=10)
