@@ -144,33 +144,6 @@ class ScreenlySettings(IterableUserDict):
 
 settings = ScreenlySettings()
 
-'''
-class ZmqPublisher:
-    INSTANCE = None
-
-    def __init__(self):
-        if self.INSTANCE is not None:
-            raise ValueError("An instantiation already exists!")
-
-        self.context = zmq.Context()
-
-        self.socket = self.context.socket(zmq.PUB)
-        self.socket.bind('tcp://127.0.0.1:10001')
-        sleep(1)
-
-    @classmethod
-    def get_instance(cls):
-        if cls.INSTANCE is None:
-            cls.INSTANCE = ZmqPublisher()
-        return cls.INSTANCE
-
-    def send_to_ws_server(self, msg):
-        self.socket.send("ws_server {}".format(msg))
-
-    def send_to_viewer(self, msg):
-        self.socket.send_string("viewer {}".format(msg))
-'''
-
 def authenticate():
     realm = "Screenly OSE" + (" " + settings['player_name'] if settings['player_name'] else "")
     return Response("Access denied", 401, {"WWW-Authenticate": 'Basic realm="' + realm + '"'})
