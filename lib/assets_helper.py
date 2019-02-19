@@ -1,6 +1,5 @@
-import db
-import queries
 import datetime
+from . import db, queries
 
 FIELDS = ["asset_id", "name", "uri", "start_date",
           "end_date", "duration", "mimetype", "is_enabled", "is_processing", "nocache", "play_order",

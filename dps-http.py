@@ -2,6 +2,7 @@
 
 import json
 from os import getenv, makedirs, mkdir, path, remove, rename, statvfs, stat
+from datetime import timedelta
 
 from flask import Flask, make_response, render_template, request, send_from_directory, url_for
 from flask_cors import CORS
@@ -11,11 +12,12 @@ from flask_swagger_ui import get_swaggerui_blueprint
 import paho.mqtt.client as mqtt
 import threading, datetime
 
-from lib import db, queries
+from lib import db, queries, diagnostics, utils
 
 from gunicorn.app.base import Application
 from werkzeug.wrappers import Request
-
+from hurry.filesize import size
+from subprocess import check_output
 from settings import auth_basic, settings, LISTEN, PORT
 
 HOME = getenv('HOME', '/home/pi')
@@ -95,13 +97,13 @@ def viewDps():
     return template('dps.html', ip_lookup=True, msg=player_id)
 
 
-@app.route('/system_info')
+@app.route('/status')
 #@auth_basic
 def system_info():
     viewlog = None
     try:
         viewlog = [line.decode('utf-8') for line in
-                   check_output(['sudo', 'systemctl', 'status', 'screenly-viewer.service', '-n', '20']).split('\n')]
+                   check_output(['sudo', 'systemctl', 'status', 'screenly-web.service', '-n', '20']).split('\n')]
     except:
         pass
 

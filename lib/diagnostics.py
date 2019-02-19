@@ -5,7 +5,7 @@ import os
 import sh
 import socket
 import sqlite3
-import utils
+from . import utils
 from pprint import pprint
 from uptime import uptime
 from datetime import datetime

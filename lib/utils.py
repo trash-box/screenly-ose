@@ -1,5 +1,4 @@
 import certifi
-import db
 import json
 import os
 import pytz
@@ -8,18 +7,32 @@ import re
 import requests
 import string
 
+from . import db
+from . assets_helper import update
+
 from datetime import datetime, timedelta
 from distutils.util import strtobool
 from netifaces import ifaddresses, gateways
 from os import getenv, path, utime
 from platform import machine
-from settings import settings, ZmqPublisher
+from settings import settings
 from sh import grep, netstat, ErrorReturnCode_1
 from subprocess import check_output, call
 from threading import Thread
-from urlparse import urlparse
 
-from assets_helper import update
+
+try:
+    from urlparse import urlparse
+except:
+    from urllib import parse as urlparse
+
+from . assets_helper import update
+
+try:
+    xrange
+except NameError:
+    xrange = range
+
 
 arch = machine()
 
