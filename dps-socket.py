@@ -88,7 +88,7 @@ def findDpsServer():
         answer, server_addr = s.recvfrom(1024)
         print("UDP Server " + server_addr[0])
         try:
-            settings['dps_server'] = json.loads(answer)['mqtt']
+            settings['dps_server'] = json.loads(answer.decode('utf-8'))['mqtt']
         except:
             settings['dps_server'] = 'None'
         
