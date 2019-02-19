@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 import json, datetime
 import subprocess
 import socket
-from settings import settings
+from settings import settings, get_mqtt_namespace
 from lib import utils
 
 app = Flask(__name__)
@@ -39,7 +39,7 @@ def on_mqtt_mesage(client, userdata, msg):
 
     if msg.topic == '/dps/client/' + utils.get_serial() + '/message':
         try:
-            socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace='/test')
+            socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
         except:
             print("Error: " + sys.exc_info()[0])
     
@@ -49,16 +49,16 @@ def on_mqtt_mesage(client, userdata, msg):
     elif msg.topic == '/dps/clients/reboot' and payload == 'true':
         subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
 
-@socketio.on('my event', namespace='/test')
+@socketio.on('my event', namespace=get_mqtt_namespace())
 def my_event(msg):
     print("my event: " + msg['data'])
 
-@socketio.on('connect', namespace='/test')
+@socketio.on('connect', namespace=get_mqtt_namespace())
 def test_connect():
     print("SocketIO Client connected")
-    emit('message', {'data': '{"values":["","","",""]}', 'time': str(datetime.datetime.utcnow())}, namesace='/test', broadcast=True)
+    emit('message', {'data': '{"values":["","","",""]}', 'time': str(datetime.datetime.utcnow())}, namesace=get_mqtt_namespace(), broadcast=True)
 
-@socketio.on('disconnect', namespace='/test')
+@socketio.on('disconnect', namespace=get_mqtt_namespace())
 def test_disconnect():
     print('Client disconnected')
 

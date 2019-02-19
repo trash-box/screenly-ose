@@ -18,7 +18,7 @@ from gunicorn.app.base import Application
 from werkzeug.wrappers import Request
 from hurry.filesize import size
 from subprocess import check_output
-from settings import auth_basic, settings, LISTEN, PORT
+from settings import auth_basic, settings, LISTEN, PORT, get_mqtt_namespace
 
 HOME = getenv('HOME', '/home/pi')
 DISABLE_MANAGE_NETWORK = '.screenly/disable_manage_network'
@@ -81,7 +81,7 @@ def template(template_name, **context):
 def viewDps():
     player_id = utils.get_serial()
 
-    return template('dps.html', ip_lookup=True, msg=player_id)
+    return template('dps.html', ip_lookup=True, msg=player_id, mqtt_namespace=get_mqtt_namespace())
 
 
 @app.route('/status')

@@ -144,6 +144,9 @@ class ScreenlySettings(IterableUserDict):
 
 settings = ScreenlySettings()
 
+def get_mqtt_namespace():
+    return "/dps"
+
 def authenticate():
     realm = "Screenly OSE" + (" " + settings['player_name'] if settings['player_name'] else "")
     return Response("Access denied", 401, {"WWW-Authenticate": 'Basic realm="' + realm + '"'})
