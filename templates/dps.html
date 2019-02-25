@@ -21,25 +21,50 @@
             });
             
             socket.on('message', function(msg){
-                console.log('values: ' + msg.data.values);
-                var data = JSON.parse(msg.data);
+                console.log(msg);
 
-                if (!data.values || data.values.length == 0)
+                if (msg.message && msg.message.length > 0)
                 {
+                    $('hr').append(msg.message);
                     $('.grid').hide();
                     $('.container').show();
                 }
                 else
                 {
-                    $('.grid').show();
-                    $.each(data.values, function(idx, val) {
-                        console.log(idx);
-                        $('#val' + (idx+1)).html(val);
-                    });
-                    $('.container').hide();
+                    var data = JSON.parse(msg.data);
+                    showData(data.values);
                 }
             });
         });
+
+        function showData(data)
+        {
+            console.log(data);
+
+            $('.grid').show();
+            $('.grid__item').each(function(idx, item) {
+                if (idx < data.length) 
+                {
+                    $(item).removeClass('full_row');
+                    $(item).show();
+
+                    if (idx == data.length -1 && data.length % 2 == 1)
+                    {
+                        $(item).addClass('full_row');
+                    }
+                }
+                else
+                {
+                    $(item).hide();
+                }
+            });
+
+            $.each(data, function(idx, val) {
+                $('#val' + (idx+1)).html(val);
+            });
+
+            $('.container').hide();
+        }
     </script>
   
 </head>
@@ -63,6 +88,16 @@
         <div class="grid__item panel-4">
             <div class="content">
             <h1 id="val4">4</h1>
+            </div>
+        </div>
+        <div class="grid__item panel-5">
+            <div class="content">
+            <h1 id="val5">5</h1>
+            </div>
+        </div>
+        <div class="grid__item panel-6">
+            <div class="content">
+            <h1 id="val6">6</h1>
             </div>
         </div>
     </div>

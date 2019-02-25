@@ -30,6 +30,12 @@
     cursor: none;
     }
 
+    .full_row
+    {
+        grid-column-start: 1;
+        grid-column-end: 3;
+    }
+
     h1 {
         font-size: 3em;
         font-family: 'Open Sans', sans-serif;
