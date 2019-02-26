@@ -10,16 +10,13 @@ import paho.mqtt.client as mqtt
 import json, datetime
 import subprocess
 import socket
+import time
 from settings import settings, get_mqtt_namespace
 from lib import utils
+from threading import Thread
 
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=5)
-
-@socketio.on('value changed')
-def value_changed(message):
-    values[message['who']] = message['data']
-    emit('update value', message, broadcast=True)
 
 def on_mqtt_connect(client, userdata, flags, rc):
     print("Connected")
@@ -44,48 +41,62 @@ def on_mqtt_mesage(client, userdata, msg):
             print("Error: " + sys.exc_info()[0])
     
     elif msg.topic == '/dps/clients/commands/restart' and payload == 'true':
+        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
+        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-web restart', shell=True)
         subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
 
-    elif msg.topic == '/dps/clients/reboot' and payload == 'true':
+    elif msg.topic == '/dps/clients/commands/reboot' and payload == 'true':
         subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
 
-@socketio.on('my event', namespace=get_mqtt_namespace())
-def my_event(msg):
-    print("my event: " + msg['data'])
-
 @socketio.on('connect', namespace=get_mqtt_namespace())
-def test_connect():
+def socketio_connect():
     print("SocketIO Client connected")
-    emit('message', {'data': '{"values":["","","",""]}', 'time': str(datetime.datetime.utcnow())}, namesace=get_mqtt_namespace(), broadcast=True)
-
+    
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
-def test_disconnect():
-    print('Client disconnected')
+def socketio_disconnect():
+    print('SocketIO Client disconnected')
 
 c = mqtt.Client(protocol=mqtt.MQTTv31)
 
+class MqttFinderThread(Thread):
+    def __init__(self):
+        Thread.__init__(self)
+
+    def run(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, True)
+        s.settimeout(5)
+
+        x = utils.get_serial()
+
+        settings['dps_server'] = None
+        socketio.emit('message', {'message': 'Searching for MQTT Server', 'data': None, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+        while settings['dps_server'] is None:
+            s.sendto(bytearray.fromhex(x), ("<broadcast>", 30303))
+            try:
+                answer, server_addr = s.recvfrom(1024)
+                print("UDP Server " + server_addr[0])
+                try:
+                    settings['dps_server'] = json.loads(answer.decode('utf-8'))['mqtt']
+                except:
+                    settings['dps_server'] = None
+                
+                print("Response: %s" % settings['dps_server'])
+            except socket.timeout:
+                settings['dps_server'] = None
+                print("No MQTT Server found")
+
+        s.close()
+
+        mqttClient()
+
 def findDpsServer():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-    s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, True)
-    s.settimeout(5)
+    thread = MqttFinderThread()
+    thread.daemon = True
+    thread.start()
 
-    x = utils.get_serial()
+    time.sleep(5)
 
-    s.sendto(bytearray.fromhex(x), ("<broadcast>", 30303))
-    try:
-        answer, server_addr = s.recvfrom(1024)
-        print("UDP Server " + server_addr[0])
-        try:
-            settings['dps_server'] = json.loads(answer.decode('utf-8'))['mqtt']
-        except:
-            settings['dps_server'] = 'None'
-        
-        print("Response: %s" % settings['dps_server'])
-    except socket.timeout:
-        settings['dps_server'] = 'None'
-        print("No server found")
-
-    s.close()
 
 def mqttClient():
     c.on_connect = on_mqtt_connect
@@ -94,6 +105,10 @@ def mqttClient():
     data = {}
     data['client-id'] = utils.get_serial()
     c.will_set("/dps/clients/disconnected", json.dumps(data), retain=False)
+
+    while settings['dps_server'] is None:
+        time.sleep(5)
+
     print("mqtt connect_async " + settings['dps_server'])
     c.connect_async(settings['dps_server'], keepalive=10)
     c.loop_start()
@@ -101,5 +116,4 @@ def mqttClient():
 if __name__ == "__main__":
     findDpsServer()
 
-    mqttClient()
     socketio.run(app)
