@@ -42,6 +42,12 @@
             console.log(data);
 
             $('.grid').show();
+
+            $.each(data, function(idx, val) {
+                var item = $('#val' + (idx+1));
+                item.html(val);
+            });
+
             $('.grid__item').each(function(idx, item) {
                 if (idx < data.length) 
                 {
@@ -52,18 +58,47 @@
                     {
                         $(item).addClass('full_row');
                     }
+
+                    fitText(item);
                 }
                 else
                 {
                     $(item).hide();
                 }
             });
-
-            $.each(data, function(idx, val) {
-                $('#val' + (idx+1)).html(val);
-            });
+            equalText();
 
             $('.container').hide();
+        }
+
+        function fitText(element)
+        {
+            var h1 = $(element).find('h1:first');
+
+            h1.css('font-size', '15px');
+
+            var counter = 1;
+            while(h1.width() < $(element).width())
+            {
+                h1.css('font-size', '+=5px');
+
+                if (++counter > 1500) break;
+            }
+			h1.css('font-size', '-=5px');
+        }
+
+        function equalText()
+        {
+            var smallestfontSize = 10000;
+            $('h1:visible').each(function(idx, item) {
+                var size = parseInt($(item).css('font-size').replace(/px$/, ''));
+
+                if (size < smallestfontSize) smallestfontSize = size;
+            });
+
+            $('h1:visible').each(function(idx, item) {
+                $(item).css('font-size', smallestfontSize + 'px');
+            });            
         }
     </script>
   
