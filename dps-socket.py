@@ -17,6 +17,7 @@ from threading import Thread
 
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=5)
+last_mqtt_payload = None
 
 def on_mqtt_connect(client, userdata, flags, rc):
     print("Connected")
@@ -28,6 +29,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
     client.publish("/dps/clients/connected", json.dumps(data))
 
 def on_mqtt_mesage(client, userdata, msg):
+    global last_mqtt_payload
     try:
         payload = msg.payload.decode("utf-8")
         print("mqtt_message: {} {}".format(msg.topic, msg.payload))
@@ -37,6 +39,7 @@ def on_mqtt_mesage(client, userdata, msg):
     if msg.topic == '/dps/client/' + utils.get_serial() + '/message':
         try:
             socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+            last_mqtt_payload = payload
         except:
             print("Error: " + sys.exc_info()[0])
     
@@ -50,7 +53,15 @@ def on_mqtt_mesage(client, userdata, msg):
 
 @socketio.on('connect', namespace=get_mqtt_namespace())
 def socketio_connect():
+    global last_mqtt_payload
     print("SocketIO Client connected")
+
+    mqtt_server = settings['dps_server']
+
+    if mqtt_server == None:
+        socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+    else:
+        socketio.emit('message', {'data': last_mqtt_payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
     
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
 def socketio_disconnect():
