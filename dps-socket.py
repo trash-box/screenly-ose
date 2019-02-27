@@ -44,9 +44,9 @@ def on_mqtt_mesage(client, userdata, msg):
             print("Error: " + sys.exc_info()[0])
     
     elif msg.topic == '/dps/clients/commands/restart' and payload == 'true':
-        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
         subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-web restart', shell=True)
         subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
+        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
 
     elif msg.topic == '/dps/clients/commands/reboot' and payload == 'true':
         subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
