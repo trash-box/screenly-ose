@@ -21,6 +21,7 @@ last_mqtt_payload = None
 
 def on_mqtt_connect(client, userdata, flags, rc):
     print("Connected")
+    socketio.emit('message', {'data': None, "message" : "DPS-Server connected", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
     data = {}
     data['client-id'] = utils.get_serial()
@@ -43,13 +44,19 @@ def on_mqtt_mesage(client, userdata, msg):
         except:
             print("Error: " + sys.exc_info()[0])
     
-    elif msg.topic == '/dps/clients/commands/restart' and payload == 'true':
-        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-web restart', shell=True)
-        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
-        subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
+    elif (msg.topic == '/dps/clients/commands/restart' or msg.topic == '/dps/client/' + utils.get_serial() + '/restart') and payload == 'true':
+        restart()
 
-    elif msg.topic == '/dps/clients/commands/reboot' and payload == 'true':
-        subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
+    elif (msg.topic == '/dps/clients/commands/reboot' or msg.topic == '/dps/client/' + utils.get_serial() + '/reboot') and payload == 'true':
+        reboot()
+
+def reboot():
+    subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
+
+def restart():
+    subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-web restart', shell=True)
+    subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
+    subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
 
 @socketio.on('connect', namespace=get_mqtt_namespace())
 def socketio_connect():
