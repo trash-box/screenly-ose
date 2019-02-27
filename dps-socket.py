@@ -16,7 +16,7 @@ from lib import utils
 from threading import Thread
 
 app = Flask(__name__)
-socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=5)
+socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=15)
 last_mqtt_payload = None
 
 def on_mqtt_connect(client, userdata, flags, rc):
@@ -67,7 +67,7 @@ def socketio_connect():
 
     if mqtt_server == None:
         socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
-    else:
+    elif last_mqtt_payload != None:
         socketio.emit('message', {'data': last_mqtt_payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
     
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
