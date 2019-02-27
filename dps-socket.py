@@ -104,7 +104,12 @@ class MqttFinderThread(Thread):
                 settings['dps_server'] = None
                 print("No MQTT Server found")
 
+            if settings['dps_server'] == None:
+                socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+
         s.close()
+
+        socketio.emit('message', {'data': None, "message" : "DPS-Server [{}] found, now connecting...".format(settings['dps_server']), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
         mqttClient()
 
