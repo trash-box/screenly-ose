@@ -10,6 +10,8 @@
     <link href="{{ url_for('static', filename='css/grid.css') }}" rel="stylesheet"/>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
+            showStartinfo(true);
+
             namespace = '{{ context.mqtt_namespace }}'; // change to an empty string to use the global namespace
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
@@ -25,18 +27,49 @@
 
                 if (msg.message && msg.message.length > 0)
                 {
-                    $('<div/>', {html: msg.message}).prependTo('hr');
-                    $('hr div:nth-child(10)').remove()
-                    $('.grid').hide();
-                    $('.container').show();
+                    showMessage(msg.message);
                 }
                 else
                 {
-                    var data = JSON.parse(msg.data);
-                    showData(data.values);
+                    try
+                    {
+                        var data = JSON.parse(msg.data);
+
+                        if (data.message && data.message.length > 0)
+                        {
+                            showMessage(data.message);
+                        }
+                        else
+                        {
+                            showData(data.values);
+                        }
+                    }
+                    catch(e)
+                    {
+                        showMessage(e.message);
+                    }
                 }
             });
         });
+
+        function showMessage(message)
+        {
+            showStartinfo();
+            $('<div/>', {html: message}).prependTo('hr');
+            $('hr div:nth-child(10)').remove();
+            $('.grid').hide();
+            $('.container').show();
+        }
+
+        function showStartinfo(reset)
+        {
+            $('.grid').hide();
+
+            if (reset == true)
+                $('hr div').remove();
+
+            $('.container').show();
+        }
 
         function showData(data)
         {
