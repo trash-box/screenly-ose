@@ -25,7 +25,8 @@
 
                 if (msg.message && msg.message.length > 0)
                 {
-                    $('hr').append(msg.message);
+                    $('<div/>', {html: msg.message}).prependTo('hr');
+                    $('hr div:nth-child(10)').remove()
                     $('.grid').hide();
                     $('.container').show();
                 }
