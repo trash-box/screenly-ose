@@ -20,14 +20,18 @@ socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=15)
 last_mqtt_payload = None
 
 def on_mqtt_connect(client, userdata, flags, rc):
-    print("Connected")
-    socketio.emit('message', {'data': None, "message" : "DPS-Server connected", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+    print("MQTT connected")
+    socketio.emit('message', {'data': None, "message" : "MQTT: DPS-Server connected", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
     data = {}
     data['client-id'] = utils.get_serial()
 
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
     client.publish("/dps/clients/connected", json.dumps(data))
+
+def on_mqtt_disconnect(client, userdata, rc):
+    print("MQTT disconnected")
+    socketio.emit('message', {'data': None, 'message': 'MQTT: DPS-Server disconnected', 'time': str(datetime.datetime.utcnow())}, namespace = get_mqtt_namespace())
 
 def on_mqtt_mesage(client, userdata, msg):
     global last_mqtt_payload
@@ -58,23 +62,32 @@ def restart():
     subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
     subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
 
+@socketio.on('my_event', namespace=get_mqtt_namespace())
+def socketio_my_event(msg):
+    print("my_event {}".format(msg))
+
 @socketio.on('connect', namespace=get_mqtt_namespace())
 def socketio_connect():
     global last_mqtt_payload
-    print("SocketIO Client connected")
 
     mqtt_server = settings['dps_server']
+
+    print("SocketIO Client connected")
 
     if mqtt_server == None:
         socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
     elif last_mqtt_payload != None:
         socketio.emit('message', {'data': last_mqtt_payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
-    
+    else:
+        #socketio.emit('message', {'data': None, 'message': 'No Data available for this client', 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+        pass
+
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
 def socketio_disconnect():
     print('SocketIO Client disconnected')
 
 c = mqtt.Client(protocol=mqtt.MQTTv31)
+c.enable_logger(None)
 
 class MqttFinderThread(Thread):
     def __init__(self):
@@ -118,11 +131,10 @@ def findDpsServer():
     thread.daemon = True
     thread.start()
 
-    time.sleep(5)
-
 
 def mqttClient():
     c.on_connect = on_mqtt_connect
+    c.on_disconnect = on_mqtt_disconnect
     c.on_message = on_mqtt_mesage
 
     data = {}

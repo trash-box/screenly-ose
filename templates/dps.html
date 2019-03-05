@@ -9,6 +9,8 @@
     <link href="{{ url_for('static', filename='css/screenly.css') }}" rel="stylesheet"/>
     <link href="{{ url_for('static', filename='css/grid.css') }}" rel="stylesheet"/>
     <script type="text/javascript" charset="utf-8">
+        var socketio_timeoutID;
+
         $(document).ready(function(){
             showStartinfo(true);
 
@@ -19,7 +21,18 @@
             
             socket.on('connect', function(msg) {
                 console.log('connected');
+                clearTimeout(socketio_timeoutID);
+                $('#socketio-connection').html('connected');
                 socket.emit('my_event', {data: 'I\'m connected!'});
+            });
+
+            socket.on('disconnect', function(reason) {
+                console.log('disconnected');
+                $('#socketio-connection').html('disconnected');
+
+                socketio_timeoutID = setTimeout(function() {
+                    showStartinfo();
+                }, 5000);
             });
             
             socket.on('message', function(msg){
@@ -181,9 +194,14 @@
         <div class="row">
             <div class="col-12 text-center">
                 {% if context.ip_lookup %}
-                    <p>DPS-Client new Device with ID:</p>
-                    <div class="form-actions">
-                        <a href="{{ context.msg }}">{{ context.msg }}</a>
+                    <div class="row">
+                        <p>DPS-Client with ID:</p>
+                        <div class="form-actions">
+                            <a href="{{ context.msg }}">{{ context.msg }}</a>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">SocketIO: <span id="socketio-connection">disconnected</span></div>
                     </div>
                 {% else %}
                     <p>{{ context.msg }}</p>
