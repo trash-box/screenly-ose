@@ -23,9 +23,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
     print("MQTT connected")
     socketio.emit('message', {'data': None, "message" : "MQTT: DPS-Server connected", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
-    data = {}
-    data['client-id'] = utils.get_serial()
-    data['ip'] = utils.get_node_ip()
+    data = get_default_data()
     client.publish("/dps/clients/connected", json.dumps(data))
 
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
@@ -74,6 +72,7 @@ def socketio_connect():
     mqtt_server = settings['dps_server']
 
     print("SocketIO Client connected")
+    send_browser_status('connected')
 
     if mqtt_server == None:
         socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
@@ -86,6 +85,18 @@ def socketio_connect():
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
 def socketio_disconnect():
     print('SocketIO Client disconnected')
+    send_browser_status('disconnected')
+
+def get_default_data():
+    data = {}
+    data['client-id'] = utils.get_serial()
+    data['ip'] = utils.get_node_ip()
+    return data
+
+def send_browser_status(status):
+    data = get_default_data()
+    data['status'] = status
+    c.publish("/dps/clients/status", json.dumps(data))
 
 c = mqtt.Client(protocol=mqtt.MQTTv31)
 c.enable_logger(None)
@@ -138,8 +149,7 @@ def mqttClient():
     c.on_disconnect = on_mqtt_disconnect
     c.on_message = on_mqtt_mesage
 
-    data = {}
-    data['client-id'] = utils.get_serial()
+    data = get_default_data()
     c.will_set("/dps/clients/disconnected", json.dumps(data), retain=False)
 
     while settings['dps_server'] is None:
