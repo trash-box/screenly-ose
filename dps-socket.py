@@ -25,9 +25,10 @@ def on_mqtt_connect(client, userdata, flags, rc):
 
     data = {}
     data['client-id'] = utils.get_serial()
+    data['ip'] = utils.get_node_ip()
+    client.publish("/dps/clients/connected", json.dumps(data))
 
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
-    client.publish("/dps/clients/connected", json.dumps(data))
 
 def on_mqtt_disconnect(client, userdata, rc):
     print("MQTT disconnected")
