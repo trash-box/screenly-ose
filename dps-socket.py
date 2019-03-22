@@ -21,7 +21,7 @@ last_mqtt_payload = None
 
 def on_mqtt_connect(client, userdata, flags, rc):
     print("MQTT connected")
-    socketio.emit('message', {'data': None, "message" : "MQTT: DPS-Server connected", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+    socketio.emit('message', {'data': None, "message" : "MQTT: DPS-Server [{}] connected".format(settings['dps_server']), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
     data = get_default_data()
     client.publish("/dps/clients/connected", json.dumps(data))
@@ -30,7 +30,7 @@ def on_mqtt_connect(client, userdata, flags, rc):
 
 def on_mqtt_disconnect(client, userdata, rc):
     print("MQTT disconnected")
-    socketio.emit('message', {'data': None, 'message': 'MQTT: DPS-Server disconnected', 'time': str(datetime.datetime.utcnow())}, namespace = get_mqtt_namespace())
+    socketio.emit('message', {'data': None, 'message': 'MQTT: DPS-Server disconnected ' + str(rc), 'time': str(datetime.datetime.utcnow())}, namespace = get_mqtt_namespace())
 
 def on_mqtt_mesage(client, userdata, msg):
     global last_mqtt_payload
@@ -79,8 +79,7 @@ def socketio_connect():
     elif last_mqtt_payload != None:
         socketio.emit('message', {'data': last_mqtt_payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
     else:
-        #socketio.emit('message', {'data': None, 'message': 'No Data available for this client', 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
-        pass
+        socketio.emit('message', {'data': None, 'message': 'MQTT: connected [{}] but no data available'.format(settings['dps_server']), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
 @socketio.on('disconnect', namespace=get_mqtt_namespace())
 def socketio_disconnect():
@@ -98,7 +97,7 @@ def send_browser_status(status):
     data['status'] = status
     c.publish("/dps/clients/status", json.dumps(data))
 
-c = mqtt.Client(protocol=mqtt.MQTTv31)
+c = mqtt.Client(client_id="dps-{}".format(utils.get_serial()), protocol=mqtt.MQTTv31)
 c.enable_logger(None)
 
 class MqttFinderThread(Thread):

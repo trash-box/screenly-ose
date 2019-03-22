@@ -23,7 +23,8 @@
                 console.log('connected');
                 clearTimeout(socketio_timeoutID);
                 $('#socketio-connection').html('connected');
-                socket.emit('my_event', {data: 'I\'m connected!'});
+                showMessage(msg);
+                //socket.emit('my_event', {data: 'I\'m connected!'});
             });
 
             socket.on('disconnect', function(reason) {
@@ -197,7 +198,7 @@
                     <div class="row">
                         <p>DPS-Client with ID:</p>
                         <div class="form-actions">
-                            <a href="{{ context.msg }}">{{ context.msg }}</a>
+                            <a href="#">{{ context.msg }}</a>
                         </div>
                     </div>
                     <div class="row">
