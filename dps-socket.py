@@ -52,6 +52,8 @@ def on_mqtt_mesage(client, userdata, msg):
 
     elif (msg.topic == '/dps/clients/commands/reboot' or msg.topic == '/dps/client/' + utils.get_serial() + '/reboot') and payload == 'true':
         reboot()
+    else:
+       socketio.emit('message', {'data': None, "message" : "unhandled topic {}".format(msg.topic), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace()) 
 
 def reboot():
     subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
