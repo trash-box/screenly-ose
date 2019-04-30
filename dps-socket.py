@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 import json, datetime
 import subprocess
 import socket
-import time, os
+import time, os, pytz
 from settings import settings, get_mqtt_namespace
 from lib import utils
 from threading import Thread
@@ -18,6 +18,8 @@ from threading import Thread
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=15)
 last_mqtt_payload = None
+
+local_tz = pytz.timezone('Europe/Zurich')
 
 def on_mqtt_connect(client, userdata, flags, rc):
     print("MQTT connected")
@@ -42,7 +44,7 @@ def on_mqtt_mesage(client, userdata, msg):
 
     if msg.topic == '/dps/client/' + utils.get_serial() + '/message':
         try:
-            socketio.emit('message', {'data': payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+            socketio.emit('message', {'data': payload, 'time': str(localNow())}, namespace=get_mqtt_namespace())
             last_mqtt_payload = payload
         except:
             print("Error: " + sys.exc_info()[0])
@@ -53,7 +55,7 @@ def on_mqtt_mesage(client, userdata, msg):
     elif (msg.topic == '/dps/clients/commands/reboot' or msg.topic == '/dps/client/' + utils.get_serial() + '/reboot') and payload == 'true':
         reboot()
     else:
-       socketio.emit('message', {'data': None, "message" : "unhandled topic {}".format(msg.topic), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace()) 
+       socketio.emit('message', {'data': None, "message" : "unhandled topic {}".format(msg.topic), 'time': str(localNow())}, namespace=get_mqtt_namespace()) 
 
 def reboot():
     subprocess.call('/usr/bin/sudo /sbin/reboot now', shell=True)
@@ -79,7 +81,7 @@ def socketio_connect():
     if mqtt_server == None:
         messageToViewer("DPS-Server not found")
     elif last_mqtt_payload != None:
-        socketio.emit('message', {'data': last_mqtt_payload, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+        socketio.emit('message', {'data': last_mqtt_payload, 'time': str(localNow())}, namespace=get_mqtt_namespace())
     else:
         messageToViewer('MQTT: connected [{}] but no data available'.format(settings['dps_server']))
 
@@ -140,8 +142,17 @@ class MqttFinderThread(Thread):
         mqttClient()
 
 def messageToViewer(msg):
+    now = localNow()
+    socketio.emit('message', {'data': None, "message" : now.strftime('%H:%M:%S - ') + msg, 'time': str(now)}, namespace=get_mqtt_namespace())
+
+def localNow():
     utcNow = datetime.datetime.utcnow()
-    socketio.emit('message', {'data': None, "message" : utcNow.strftime('%H:%M:%S - ') + msg, 'time': str(utcNow)}, namespace=get_mqtt_namespace())
+    return utc_to_local(utcNow)
+
+
+def utc_to_local(utc_dt):
+    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    return local_tz.normalize(local_dt) # .normalize might be unnecessary
 
 def findDpsServer():
     thread = MqttFinderThread()
