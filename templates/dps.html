@@ -196,9 +196,9 @@
             <div class="col-12 text-center">
                 {% if context.ip_lookup %}
                     <div class="row">
-                        <p>DPS-Client with ID:</p>
+                        <p>DPS-Client {{ context.msg }}:</p>
                         <div class="form-actions">
-                            <a href="#">{{ context.msg }}</a>
+                            <h2>{{ context.ip }}</h2>
                         </div>
                     </div>
                     <div class="row">

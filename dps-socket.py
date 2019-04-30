@@ -10,7 +10,7 @@ import paho.mqtt.client as mqtt
 import json, datetime
 import subprocess
 import socket
-import time
+import time, os
 from settings import settings, get_mqtt_namespace
 from lib import utils
 from threading import Thread
@@ -107,33 +107,33 @@ class MqttFinderThread(Thread):
         Thread.__init__(self)
 
     def run(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM, socket.IPPROTO_UDP)
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, True)
-        s.settimeout(5)
+        settings['dps_server'] = None
 
         x = utils.get_serial()
+        mqtt_json_file = 'mqtt.json'
 
-        settings['dps_server'] = None
         socketio.emit('message', {'message': 'Searching for MQTT Server', 'data': None, 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
         while settings['dps_server'] is None:
-            s.sendto(bytearray.fromhex(x), ("<broadcast>", 30303))
             try:
-                answer, server_addr = s.recvfrom(1024)
-                print("UDP Server " + server_addr[0])
-                try:
-                    settings['dps_server'] = json.loads(answer.decode('utf-8'))['mqtt']
-                except:
-                    settings['dps_server'] = None
-                
-                print("Response: %s" % settings['dps_server'])
-            except socket.timeout:
+                socketio.emit('message', {'data': None, "message" : "Search for file {}".format(mqtt_json_file), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+                if os.path.isfile(mqtt_json_file) and os.access(mqtt_json_file, os.R_OK):
+                    socketio.emit('message', {'data': None, "message" : "File found {}".format(mqtt_json_file), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+                    with open(mqtt_json_file) as json_file:
+                        data = json.load(json_file)
+
+                    try:
+                        settings['dps_server'] = data['server']
+                    except Exception as ex:
+                        socketio.emit('message', {'data': None, "message" : "Exception {}".format(ex), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+                        settings['dps_server'] = None
+            except Exception as ex:
+                socketio.emit('message', {'data': None, "message" : "Exception {}".format(ex), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
                 settings['dps_server'] = None
-                print("No MQTT Server found")
 
             if settings['dps_server'] == None:
-                socketio.emit('message', {'data': None, "message" : "DPS-Server not found", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
+                socketio.emit('message', {'data': None, "message" : "no DPS-Server found in configuration", 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
-        s.close()
+            time.sleep(5)
 
         socketio.emit('message', {'data': None, "message" : "DPS-Server [{}] found, now connecting...".format(settings['dps_server']), 'time': str(datetime.datetime.utcnow())}, namespace=get_mqtt_namespace())
 
