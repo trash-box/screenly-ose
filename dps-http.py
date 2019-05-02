@@ -80,8 +80,9 @@ def template(template_name, **context):
 @app.route('/')
 def viewDps():
     player_id = utils.get_serial()
+    player_ip = utils.get_node_ip()
 
-    return template('dps.html', ip_lookup=True, msg=player_id, mqtt_namespace=get_mqtt_namespace())
+    return template('dps.html', ip_lookup=True, msg=player_id, ip=player_ip, mqtt_namespace=get_mqtt_namespace())
 
 
 @app.route('/info')
