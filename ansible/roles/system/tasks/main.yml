@@ -44,6 +44,12 @@
   tags:
     - touches_boot_partition
 
+- name: Remove black border
+  lineinfile:
+    dest: /boot/config.txt
+    regexp: disable_overscan=
+    line: disable_overscan=1
+
 - name: Backup kernel boot args
   copy:
     src: /boot/cmdline.txt
