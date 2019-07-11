@@ -13,16 +13,20 @@ import socket
 import time, os, pytz
 from settings import settings, get_mqtt_namespace
 from lib import utils
-from threading import Thread
+from threading import Thread, Timer
+import functools
 
 app = Flask(__name__)
 socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=15)
 last_mqtt_payload = None
+mqtt_connected = False
 
 local_tz = pytz.timezone('Europe/Zurich')
 
 def on_mqtt_connect(client, userdata, flags, rc):
+    global mqtt_connected
     print("MQTT connected")
+    mqtt_connected = True
     messageToViewer("MQTT: DPS-Server [{}] connected".format(settings['dps_server']))
 
     data = get_default_data()
@@ -31,8 +35,19 @@ def on_mqtt_connect(client, userdata, flags, rc):
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
 
 def on_mqtt_disconnect(client, userdata, rc):
+    global mqtt_connected
     print("MQTT disconnected")
-    messageToViewer('MQTT: DPS-Server disconnected ' + str(rc))
+    mqtt_connected = False
+
+    f = functools.partial(on_disconnect_after_timeout, (str(rc)))
+    t = Timer(15.0, f)
+    t.start() 
+
+def on_disconnect_after_timeout(rc):
+    global mqtt_connected
+    print("MQTT disconnect timedout")
+    if mqtt_connected == False:
+        messageToViewer('MQTT: DPS-Server disconnected ' + str(rc))
 
 def on_mqtt_mesage(client, userdata, msg):
     global last_mqtt_payload
