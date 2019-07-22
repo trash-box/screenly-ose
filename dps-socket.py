@@ -69,6 +69,8 @@ def on_mqtt_mesage(client, userdata, msg):
 
     elif (msg.topic == '/dps/clients/commands/reboot' or msg.topic == '/dps/client/' + utils.get_serial() + '/reboot') and payload == 'true':
         reboot()
+    elif (msg.topic == '/dps/clients/commands/display' or msg.topic == '/dps/client/' + utils.get_serial() + '/display'):
+        switchDisplay(payload)
     else:
        socketio.emit('message', {'data': None, "message" : "unhandled topic {}".format(msg.topic), 'time': str(localNow())}, namespace=get_mqtt_namespace()) 
 
@@ -79,6 +81,13 @@ def restart():
     subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-web restart', shell=True)
     subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-viewer restart', shell=True)
     subprocess.call('/usr/bin/sudo /usr/sbin/service screenly-websocket_server_layer restart', shell=True)
+
+def switchDisplay(setOn):
+    display_power = '0'
+    if setOn == 'on':
+        display_power = '1'
+
+    subprocess.call('/usr/bin/sudo /usr/bin/vcgencmd display_power ' + display_power, shell=True)
 
 @socketio.on('my_event', namespace=get_mqtt_namespace())
 def socketio_my_event(msg):
