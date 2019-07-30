@@ -74,12 +74,13 @@ def template(template_name, **context):
         'imports': ['from lib.utils import template_handle_unicode'],
         'default_filters': ['template_handle_unicode'],
     }
+    context['version'] = utils.get_version()
 
     return render_template(template_name, context=context)
 
 @app.route('/')
 def viewDps():
-    player_id = utils.get_serial()
+    player_id = utils.get_serial() + ' '  + utils.get_version()
     player_ip = utils.get_node_ip()
 
     return template('dps.html', ip_lookup=True, msg=player_id, ip=player_ip, mqtt_namespace=get_mqtt_namespace())

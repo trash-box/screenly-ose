@@ -118,6 +118,7 @@ def get_default_data():
     data = {}
     data['client-id'] = utils.get_serial()
     data['ip'] = utils.get_node_ip()
+    data['version'] = utils.get_version()
     return data
 
 def send_browser_status(status):

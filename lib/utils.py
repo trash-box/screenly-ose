@@ -35,6 +35,8 @@ except NameError:
 
 
 arch = machine()
+__version_info__ = (1, 0, 0)
+
 
 HTTP_OK = xrange(200, 299)
 
@@ -272,3 +274,6 @@ def get_serial():
     except:
         cpuserial = "ERROR00000000000"
     return cpuserial
+
+def get_version():
+    return '.'.join(str(c) for c in __version_info__)
