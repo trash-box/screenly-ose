@@ -276,4 +276,4 @@ def get_serial():
     return cpuserial
 
 def get_version():
-    return '.'.join(str(c) for c in __version_info__)
+    return 'v' + '.'.join(str(c) for c in __version_info__)
