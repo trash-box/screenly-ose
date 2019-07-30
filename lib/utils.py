@@ -98,7 +98,7 @@ def get_node_ip():
             my_ip = ifaddresses(default_interface)[address_family_id][0]['addr']
             return my_ip
         except ValueError:
-            raise Exception("Unable to resolve local IP address.")
+            return "Unable to resolve local IP address."
 
 
 def get_video_duration(file):
