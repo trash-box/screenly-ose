@@ -21,6 +21,8 @@ socketio = SocketIO(app, heartbeat_interval=30, heartbeat_timeout=15)
 last_mqtt_payload = None
 mqtt_connected = False
 
+mqtt_timeout = 30.0
+
 local_tz = pytz.timezone('Europe/Zurich')
 
 def on_mqtt_connect(client, userdata, flags, rc):
@@ -35,12 +37,12 @@ def on_mqtt_connect(client, userdata, flags, rc):
     client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
 
 def on_mqtt_disconnect(client, userdata, rc):
-    global mqtt_connected
+    global mqtt_connected, mqtt_timeout
     print("MQTT disconnected")
     mqtt_connected = False
 
     f = functools.partial(on_disconnect_after_timeout, (str(rc)))
-    t = Timer(15.0, f)
+    t = Timer(mqtt_timeout, f)
     t.start() 
 
 def on_disconnect_after_timeout(rc):
@@ -71,6 +73,13 @@ def on_mqtt_mesage(client, userdata, msg):
         reboot()
     elif (msg.topic == '/dps/clients/commands/display' or msg.topic == '/dps/client/' + utils.get_serial() + '/display'):
         switchDisplay(payload)
+    elif (msg.topic == '/dps/clients/commands/mqtt_timeout' or msg.topic == '/dps/client/' + utils.get_serial() + '/mqtt_timeout'):
+        try:
+            timeout = float(payload)
+            setMqttTimeout(timeout)
+        except Exception as ex:
+            print(ex)
+            
     else:
        socketio.emit('message', {'data': None, "message" : "unhandled topic {}".format(msg.topic), 'time': str(localNow())}, namespace=get_mqtt_namespace()) 
 
@@ -88,6 +97,10 @@ def switchDisplay(setOn):
         display_power = '1'
 
     subprocess.call('/usr/bin/sudo /usr/bin/vcgencmd display_power ' + display_power, shell=True)
+
+def setMqttTimeout(new_timeout):
+    global mqtt_timeout
+    mqtt_timeout = new_timeout
 
 @socketio.on('my_event', namespace=get_mqtt_namespace())
 def socketio_my_event(msg):
