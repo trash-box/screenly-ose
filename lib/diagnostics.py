@@ -62,7 +62,7 @@ def get_monitor_status():
 
 def get_display_power():
     try:
-        display_status = sh.vcgencmd('display_power').stdout.strip().split('=')
+        display_status = sh.vcgencmd('display_power').stdout.decode('utf-8').strip().split('=')
         if display_status[1] == '1':
             return 'On'
         elif display_status[1] == '0':
