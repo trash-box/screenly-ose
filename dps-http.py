@@ -91,8 +91,8 @@ def viewDps():
 def system_info():
     viewlog = None
     try:
-        viewlog = [line.decode('utf-8') for line in
-                   check_output(['sudo', 'systemctl', 'status', 'screenly-web.service', '-n', '20']).split('\n')]
+        viewlog = None
+        #viewlog = check_output(['sudo', 'systemctl', 'status', 'screenly-websocket_server_layer.service', '-n', '20']).decode('utf-8').split('\n')
     except:
         pass
 
