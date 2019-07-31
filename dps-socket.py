@@ -12,7 +12,7 @@ import subprocess
 import socket
 import time, os, pytz
 from settings import settings, get_mqtt_namespace
-from lib import utils
+from lib import utils, diagnostics
 from threading import Thread, Timer
 import functools
 
@@ -132,6 +132,7 @@ def get_default_data():
     data['client-id'] = utils.get_serial()
     data['ip'] = utils.get_node_ip()
     data['version'] = utils.get_version()
+    data['display_power'] = diagnostics.get_display_power()
     return data
 
 def send_browser_status(status):
