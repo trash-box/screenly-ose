@@ -102,6 +102,8 @@ def system_info():
 
     display_power = diagnostics.get_display_power()
 
+    temperature = diagnostics.get_temperature()
+
     # Calculate disk space
     slash = statvfs("/")
     free_space = size(slash.f_bavail * slash.f_frsize)
@@ -121,7 +123,8 @@ def system_info():
         free_space=free_space,
         uptime=system_uptime,
         display_info=display_info,
-        display_power=display_power
+        display_power=display_power,
+        temperature=temperature
     )
 
 @app.errorhandler(403)

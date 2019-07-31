@@ -72,6 +72,13 @@ def get_display_power():
     except:
         return 'Unable to determine display power.'
 
+def get_temperature():
+    try:
+        temperature = sh.vcgencmd('measure_temp').stdout.decode('utf-8').strip().split('=')
+
+        return temperature[1].replace('\'C', '')
+    except:
+        return 'Unable to determine temperature.'
 
 def get_network_interfaces():
     if_data = {}
