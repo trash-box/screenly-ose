@@ -92,7 +92,7 @@ def system_info():
     viewlog = None
     try:
         viewlog = None
-        #viewlog = check_output(['sudo', 'systemctl', 'status', 'screenly-websocket_server_layer.service', '-n', '20']).decode('utf-8').split('\n')
+        #viewlog = check_output(['sudo', 'systemctl', 'status', 'screenly-viewer.service', '-n', '20']).decode('utf-8').split('\n')
     except:
         pass
 
