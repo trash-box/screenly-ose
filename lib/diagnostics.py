@@ -55,7 +55,7 @@ def get_gpu_version():
 
 def get_monitor_status():
     try:
-        return sh.tvservice('-s').stdout.strip()
+        return sh.tvservice('-s').stdout.decode('utf-8').strip()
     except:
         return 'Unable to run tvservice.'
 
