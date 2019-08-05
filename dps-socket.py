@@ -98,6 +98,8 @@ def switchDisplay(setOn):
 
     subprocess.call('/usr/bin/sudo /usr/bin/vcgencmd display_power ' + display_power, shell=True)
 
+    send_browser_status('connected')
+
 def setMqttTimeout(new_timeout):
     global mqtt_timeout
     mqtt_timeout = new_timeout
