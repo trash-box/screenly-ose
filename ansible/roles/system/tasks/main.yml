@@ -150,24 +150,8 @@
 
 - name: Install Screenly dependencies
   apt:
-    name: "{{ item }}"
+    name: ['console-data', 'libffi-dev', 'libssl-dev', 'matchbox', 'omxplayer', 'python-dev', 'python-netifaces', 'python-simplejson', 'rpi-update', 'sqlite3', 'systemd', 'uzbl', 'x11-xserver-utils', 'xserver-xorg', 'chromium-browser']
     state: latest
-  with_items:
-    - console-data
-    - libffi-dev
-    - libssl-dev
-    - matchbox
-    - omxplayer
-    - python-dev
-    - python-netifaces
-    - python-simplejson
-    - rpi-update
-    - sqlite3
-    - systemd
-    - uzbl
-    - x11-xserver-utils
-    - xserver-xorg
-    - chromium-browser
 
 - name: Install systemd-sysv on Wheezy
   command: bash -c 'echo "Yes, do as I say!" | apt-get install -y --force-yes systemd-sysv'
@@ -175,13 +159,8 @@
 
 - name: Remove deprecated apt dependencies
   apt:
-    name: "{{ item }}"
+    name: ['supervisor', 'lightdm', 'lightdm-gtk-greeter', 'dphys-swapfile']
     state: absent
-  with_items:
-    - supervisor
-    - lightdm
-    - lightdm-gtk-greeter
-    - dphys-swapfile
 
 - name: Perform system upgrade
   apt:
