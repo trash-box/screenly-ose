@@ -35,7 +35,7 @@ except NameError:
 
 
 arch = machine()
-__version_info__ = (1, 0, 0)
+__version_info__ = (1, 1, 0)
 
 
 HTTP_OK = xrange(200, 299)
