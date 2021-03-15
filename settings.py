@@ -145,7 +145,7 @@ class ScreenlySettings(IterableUserDict):
 settings = ScreenlySettings()
 
 def get_mqtt_namespace():
-    return "/dps"
+    return "/tba"
 
 def authenticate():
     realm = "Screenly OSE" + (" " + settings['player_name'] if settings['player_name'] else "")

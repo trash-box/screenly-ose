@@ -29,12 +29,14 @@ def on_mqtt_connect(client, userdata, flags, rc):
     global mqtt_connected
     print("MQTT connected")
     mqtt_connected = True
-    messageToViewer("MQTT: DPS-Server [{}] connected".format(settings['dps_server']))
+    messageToViewer("MQTT: TBA-Server [{}] connected".format(settings['dps_server']))
+
+    socketio.emit('mqtt_connected', {'data': None}, namespace=get_mqtt_namespace())
 
     data = get_default_data()
-    client.publish("/dps/clients/connected", json.dumps(data))
+    client.publish("/tba/clients/connected", json.dumps(data))
 
-    client.subscribe([("/dps/client/" + data['client-id'] + "/#", 0), ("/dps/clients/commands/#", 0)])
+    client.subscribe([("/tba/client/" + data['client-id'] + "/#", 0), ("/tba/clients/commands/#", 0)])
 
 def on_mqtt_disconnect(client, userdata, rc):
     global mqtt_connected, mqtt_timeout
@@ -49,7 +51,8 @@ def on_disconnect_after_timeout(rc):
     global mqtt_connected
     print("MQTT disconnect timedout")
     if mqtt_connected == False:
-        messageToViewer('MQTT: DPS-Server disconnected ' + str(rc))
+        socketio.emit('mqtt_disconnected', {'data': None}, namespace=get_mqtt_namespace())
+        #messageToViewer('MQTT: TBA-Server disconnected ' + str(rc))
 
 def on_mqtt_mesage(client, userdata, msg):
     global last_mqtt_payload
@@ -59,21 +62,42 @@ def on_mqtt_mesage(client, userdata, msg):
     except Exception as ex:
         print(ex)
 
-    if msg.topic == '/dps/client/' + utils.get_serial() + '/message':
+    if msg.topic == '/tba/client/' + utils.get_serial() + '/message':
         try:
-            socketio.emit('message', {'data': payload, 'time': str(localNow())}, namespace=get_mqtt_namespace())
-            last_mqtt_payload = payload
+            if payload != '':
+                socketio.emit('message', {'data': payload, 'time': str(localNow())}, namespace=get_mqtt_namespace())
+                last_mqtt_payload = payload
         except:
             print("Error: " + sys.exc_info()[0])
     
-    elif (msg.topic == '/dps/clients/commands/restart' or msg.topic == '/dps/client/' + utils.get_serial() + '/restart') and payload == 'true':
+    elif msg.topic == '/tba/client/' + utils.get_serial() + '/emergency':
+        try:
+            socketio.emit('emergency', {'data': payload}, namespace=get_mqtt_namespace())
+        except:
+            print("Error: " + sys.exc_info()[0])
+
+    elif (msg.topic == '/tba/clients/commands/tess' or msg.topic == '/tba/client/' + utils.get_serial() + '/tess'):
+        try:
+            socketio.emit('tess', {'data': payload}, namespace=get_mqtt_namespace())
+        except:
+            print("Error: " + sys.exc_info()[0])
+
+    elif (msg.topic == '/tba/clients/commands/restart' or msg.topic == '/tba/client/' + utils.get_serial() + '/restart') and payload == 'true':
         restart()
 
-    elif (msg.topic == '/dps/clients/commands/reboot' or msg.topic == '/dps/client/' + utils.get_serial() + '/reboot') and payload == 'true':
+    elif (msg.topic == '/tba/clients/commands/reboot' or msg.topic == '/tba/client/' + utils.get_serial() + '/reboot') and payload == 'true':
         reboot()
-    elif (msg.topic == '/dps/clients/commands/display' or msg.topic == '/dps/client/' + utils.get_serial() + '/display'):
+
+    elif (msg.topic == '/tba/clients/commands/display' or msg.topic == '/tba/client/' + utils.get_serial() + '/display'):
         switchDisplay(payload)
-    elif (msg.topic == '/dps/clients/commands/mqtt_timeout' or msg.topic == '/dps/client/' + utils.get_serial() + '/mqtt_timeout'):
+
+    elif (msg.topic == '/tba/clients/commands/rotate' or msg.topic == '/tba/client/' + utils.get_serial() + '/rotate'):
+        socketio.emit('rotate', {'data': payload}, namespace=get_mqtt_namespace())
+
+    elif (msg.topic == '/tba/clients/commands/time' or msg.topic == '/tba/client/' + utils.get_serial() + '/time'):
+        socketio.emit('time', {'time': payload}, namespace=get_mqtt_namespace())
+
+    elif (msg.topic == '/tba/clients/commands/mqtt_timeout' or msg.topic == '/tba/client/' + utils.get_serial() + '/mqtt_timeout'):
         try:
             timeout = float(payload)
             setMqttTimeout(timeout)
@@ -118,9 +142,9 @@ def socketio_connect():
     send_browser_status('connected')
 
     if mqtt_server == None:
-        messageToViewer("DPS-Server not found")
+        messageToViewer("TBA-Server not found")
     elif last_mqtt_payload != None:
-        socketio.emit('message', {'data': last_mqtt_payload, 'time': str(localNow())}, namespace=get_mqtt_namespace())
+        socketio.emit('message', {'data': last_mqtt_payload, 'time': str(localNow()), 'last_mqtt_payload': 'None'}, namespace=get_mqtt_namespace())
     else:
         messageToViewer('MQTT: connected [{}] but no data available'.format(settings['dps_server']))
 
@@ -140,9 +164,9 @@ def get_default_data():
 def send_browser_status(status):
     data = get_default_data()
     data['status'] = status
-    c.publish("/dps/clients/status", json.dumps(data))
+    c.publish("/tba/clients/status", json.dumps(data))
 
-c = mqtt.Client(client_id="dps-{}".format(utils.get_serial()), protocol=mqtt.MQTTv31)
+c = mqtt.Client(client_id="tba-{}".format(utils.get_serial()), protocol=mqtt.MQTTv31)
 c.enable_logger(None)
 
 class MqttFinderThread(Thread):
@@ -174,11 +198,11 @@ class MqttFinderThread(Thread):
                 settings['dps_server'] = None
 
             if settings['dps_server'] == None:
-                messageToViewer("no DPS-Server found in configuration")
+                messageToViewer("no TBA-Server found in configuration")
 
             time.sleep(5)
 
-        messageToViewer("DPS-Server [{}] found, now connecting...".format(settings['dps_server']))
+        messageToViewer("TBA-Server [{}] found, now connecting...".format(settings['dps_server']))
 
         mqttClient()
 
@@ -195,7 +219,7 @@ def utc_to_local(utc_dt):
     local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
     return local_tz.normalize(local_dt) # .normalize might be unnecessary
 
-def findDpsServer():
+def findTbaServer():
     thread = MqttFinderThread()
     thread.daemon = True
     thread.start()
@@ -207,7 +231,7 @@ def mqttClient():
     c.on_message = on_mqtt_mesage
 
     data = get_default_data()
-    c.will_set("/dps/clients/disconnected", json.dumps(data), retain=False)
+    c.will_set("/tba/clients/disconnected", json.dumps(data), retain=False)
 
     while settings['dps_server'] is None:
         time.sleep(5)
@@ -217,6 +241,6 @@ def mqttClient():
     c.loop_start()
 
 if __name__ == "__main__":
-    findDpsServer()
+    findTbaServer()
 
     socketio.run(app)

@@ -1,0 +1,165 @@
+body, html, .tba {
+    height: 100%;
+    background-color: hsl(0, 0%, 100%);
+}
+
+#top {
+    height: 240px;
+    display: flex;
+    font-size: 150px;
+    font-weight: bold;
+    line-height: 240px;
+}
+
+.einlad {
+    color: #ffffff;
+    background-color: #000000;
+}
+
+.auslad {
+    color: #000000;
+    background-color: #ffd500;
+}
+
+#qr, #error {
+    background-color:white;
+    position: absolute;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    top: 240px;
+    bottom: 0;
+    padding: 25px;
+}
+
+#content {
+    position: absolute;
+    top: 240px;
+    bottom: 0;
+    width: 100%;
+}
+
+#door {
+    flex: 0 0 50%;
+    margin-left: 0.1em;
+    font-size: 1.2em;
+}
+
+#sector {
+    flex: 1;
+    text-align: right;
+    height: 120px;
+    line-height: 120px;
+    position: fixed;
+    right: 10px;
+    top: 10px;
+}
+
+#cur_time {
+    margin-top: 160px;
+    line-height: 80px;
+    height: 80px;
+    font-size: 0.5em;
+    position: fixed;
+    right: 10px;
+}
+
+#location {
+    font-size: 250px;
+    line-height: 240px;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+#info {
+    border-top: 10px solid black;
+    border-bottom: 10px solid black;
+    display: flex;
+    font-size: 5em;
+    height: 175px;
+    white-space: nowrap;
+}
+
+#prio {
+    flex: 0 0 40%;
+}
+
+#time {
+    flex: 1;
+    text-align: right;
+}
+
+#randgebiet {
+    flex: 0 0 35%;
+    overflow: hidden;
+    background-color: #ffd500;
+    padding: 0 10px;
+    text-align: center;
+}
+
+#data {
+    height: 420px;
+    overflow: hidden;
+}
+
+#data {
+    line-height: 210px;
+    font-size: 180px;
+    padding: 0 10px;
+}
+
+#text1, #text2, #text3, #text4, #text5, #text6 {
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+#txt_grp2, #txt_grp3, #plz, #rx_capacity {
+    display: none;
+}
+
+#rx_capacity {
+    font-size: 120px;
+}
+
+#plz div {
+    line-height: 140px;
+    font-size: 120px;
+    text-align: center;
+}
+
+#plz {
+    display: flex;
+}
+
+#plz .left {
+    flex: 0 0 50%
+}
+
+#plz .right {
+    flex: 1;
+}
+
+#location span.notprogramm {
+  	color: #0000ff;
+	background-color: none !important;
+}
+
+.notprogramm {
+	color: #0099ff;
+	background-color: none !important;
+}
+
+#error {
+    background-color: #000000;
+    color: #ffffff;
+    font-size: 12em;
+}
+
+#error div.reason
+{
+    position: absolute;
+    bottom: 50px;
+    height: 50px;
+    font-size: 75px;
+}

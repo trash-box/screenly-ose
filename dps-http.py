@@ -24,6 +24,7 @@ HOME = getenv('HOME', '/home/pi')
 DISABLE_MANAGE_NETWORK = '.screenly/disable_manage_network'
 
 app = Flask(__name__)
+app.config['DEBUG'] = False
 CORS(app)
 
 ################################
@@ -83,7 +84,7 @@ def viewDps():
     player_id = utils.get_serial() + ' '  + utils.get_version()
     player_ip = utils.get_node_ip()
 
-    return template('dps.html', ip_lookup=True, msg=player_id, ip=player_ip, mqtt_namespace=get_mqtt_namespace())
+    return template('tba.html', ip_lookup=True, msg=player_id, ip=player_ip, mqtt_namespace=get_mqtt_namespace())
 
 
 @app.route('/info')

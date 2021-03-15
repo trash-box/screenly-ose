@@ -8,7 +8,7 @@ configparser==3.5.0
 eventlet==0.24.1
 Flask-Cors==3.0.4
 flask-restful-swagger-2==0.35
-Flask-SocketIO==3.2.1
+Flask-SocketIO==4.3.2
 flask-swagger-ui==3.0.12
 flask==1.0.2
 flask_restful==0.3.6
