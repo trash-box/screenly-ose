@@ -358,7 +358,7 @@
 
         function setQrCode(ident)
         {
-            $('#qr').empty();
+            $('#qr_code').empty();
 
             if (ident == null || ident.length == 0) return;
 
@@ -367,8 +367,18 @@
 
             var length = (width < height) ? width : height;
 
+            try
+            {
+                var d = ident.split('\n')[1];
+
+                $('#qr div.licensePlate').text(ident.split('\n')[2]);
+                $('#qr div.date').text(d.split('T')[0]);
+                $('#qr div.time').text(d.split('T')[1].split('.')[0]);
+            }
+            catch {}
+
             new QRCode(
-                document.getElementById('qr'), {
+                document.getElementById('qr_code'), {
                     width: length,
                     height: length,
                     text: ident, 
@@ -503,7 +513,14 @@
                 </div>
             </div>
         </div>
-        <div id="qr"></div>
+        <div id="qr">
+            <div style="display:flex; flex-direction: column">
+                <div class="licensePlate"></div>
+                <div class="date"></div>
+                <div class="time"></div>
+            </div>
+            <div id="qr_code"></div>
+        </div>
         <div id="error">
             <span>Error</span>
             <div class="reason">Tess offline</div>
