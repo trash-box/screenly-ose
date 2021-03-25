@@ -316,12 +316,16 @@
 
         function setLocation(location, bgColor)
         {
-            $('#location span:first').html(location);
+            if (location == null || location.length == 0) {
+                location = ' ';
+            }
+
+            $('#location span:first').text(location);
 
             adjustLocationFontSize();
 
             var htmlBgColor = '';
-            if (bgColor != null)
+            if (bgColor != null && location != ' ')
             {
                 htmlBgColor = '#' + bgColor;
             }
