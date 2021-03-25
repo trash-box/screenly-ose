@@ -134,7 +134,7 @@
 
                 $(steps[step]).show();
 
-                if (qr.children().length > 0)
+                if ($('#qr_code').children().length > 0)
                     qr.show();
             }
         }
@@ -358,10 +358,16 @@
 
         function setQrCode(ident)
         {
+            $('#qr div.licensePlate').empty();
+            $('#qr div.date').empty();
+            $('#qr div.time').empty();
+
             $('#qr_code').empty();
 
-            if (ident == null || ident.length == 0) return;
-
+            if (ident == null || ident.length == 0) {
+                $('#qr').hide();
+                return;
+            }
             var width = $('#qr').width();
             var height = $('#qr').height();
 
