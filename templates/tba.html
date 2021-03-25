@@ -295,7 +295,7 @@
             $('#text1').html(text1);
             $('#text2').html(text2);
 
-            if (text1 != null || text2 != null) steps.push('#txt_grp1');
+            if ((text1 != null && text1.length > 0) || (text2 != null && text2.length > 0)) steps.push('#txt_grp1');
         }
 
         function setAdditionalText(text1, text2)
@@ -303,7 +303,7 @@
             $('#text3').html(text1);
             $('#text4').html(text2);
 
-            if (text1 != null || text2 != null) steps.push('#txt_grp2');
+            if ((text1 != null && text1.length > 0) || (text2 != null && text2.length > 0)) steps.push('#txt_grp2');
         }
 
         function setGlobalText(text1, text2)
@@ -311,7 +311,7 @@
             $('#text5').html(text1);
             $('#text6').html(text2);
 
-            if (text1 != null || text2 != null) steps.push('#txt_grp3');
+            if ((text1 != null && text1.length > 0) || (text2 != null && text2.length > 0)) steps.push('#txt_grp3');
         }
 
         function setLocation(location, bgColor)
