@@ -317,15 +317,15 @@
         function setLocation(location, bgColor)
         {
             if (location == null || location.length == 0) {
-                location = ' ';
+                location = '&nbsp;';
             }
 
-            $('#location span:first').text(location);
+            $('#location span:first').html(location);
 
             adjustLocationFontSize();
 
             var htmlBgColor = '';
-            if (bgColor != null && location != ' ')
+            if (bgColor != null && location != '&nbsp;')
             {
                 htmlBgColor = '#' + bgColor;
             }
