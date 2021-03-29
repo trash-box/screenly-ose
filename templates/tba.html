@@ -18,6 +18,8 @@
         var tessError = false;
         var tbaError = false;
 
+        const lineBreak = 14;
+
         $(document).ready(function(){
             showHideError();
             namespace = '{{ context.mqtt_namespace }}'; // change to an empty string to use the global namespace
@@ -364,7 +366,6 @@
         {
             $('#qr div.licensePlate').empty();
             $('#qr div.date').empty();
-            $('#qr div.time').empty();
 
             $('#qr_code').empty();
 
@@ -381,9 +382,15 @@
             {
                 var d = ident.split('\n')[1];
 
-                $('#qr div.licensePlate').text(ident.split('\n')[2]);
-                $('#qr div.date').text(d.split('T')[0]);
-                $('#qr div.time').text(d.split('T')[1].split('.')[0]);
+                var kennzeichen = ident.split('\n')[2];
+
+                if (kennzeichen.length > lineBreak)
+                {
+                    kennzeichen = kennzeichen.substr(0, lineBreak) + '<br>\n&nbsp;&nbsp;&nbsp;' + kennzeichen.substr(lineBreak);
+                }
+
+                $('#qr div.licensePlate').html(kennzeichen);
+                $('#qr div.date').text(d.split('T')[0] + " " + d.split('T')[1].substr(0, 5));
             }
             catch {}
 
@@ -529,7 +536,6 @@
             <div style="display:flex; flex-direction: column">
                 <div class="licensePlate"></div>
                 <div class="date"></div>
-                <div class="time"></div>
             </div>
             <div id="qr_code"></div>
         </div>

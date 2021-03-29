@@ -38,6 +38,10 @@ body, html, .tba {
     font-size: 125px;
 }
 
+#qr div.date {
+    font-size: 115px;
+}
+
 #qr div {
     white-space: nowrap;
 }
