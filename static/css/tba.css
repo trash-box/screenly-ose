@@ -21,6 +21,15 @@ body, html, .tba {
     background-color: #ffd500;
 }
 
+.img img {
+    position: fixed;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%);
+    max-height: 240px;
+    overflow: hidden;
+}
+
 #qr, #error {
     background-color:white;
     position: absolute;

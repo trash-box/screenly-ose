@@ -228,6 +228,8 @@
             setRandgebiet(data.Randgebiet);
 
             setQrCode(data.Ident);
+
+            setSymbol(data.Symbol);
             
             setPrioAndTime(data.Priority, data.CloseTime);
             setRxCapacity(data.RxCapacity);
@@ -403,6 +405,19 @@
                 });
         }
 
+        function setSymbol(symbol)
+        {
+            if (symbol == null || symbol.length == 0)
+            {
+                $('.img').hide();
+            }
+            else
+            {
+                $('.img').show();
+                $('.img img').attr('src', symbol);
+            }
+        }
+
         function setPrioAndTime(prio, time)
         {
             var bgColor = "";
@@ -495,7 +510,7 @@
     <div class="tba">
         <div id="top" class="top">
             <div id="door">&nbsp;</div>
-            <div class="img"></div>
+            <div class="img"><img src=""/></div>
             <div id="sector">&nbsp;</div>
             <div id="cur_time">&nbsp;</div>
         </div>
