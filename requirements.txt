@@ -6,7 +6,7 @@ cffi==1.8.2
 click==6.7
 configparser==3.5.0
 eventlet==0.24.1
-Flask-Cors==3.0.4
+Flask-Cors==3.0.9
 flask-restful-swagger-2==0.35
 Flask-SocketIO==3.2.1
 flask-swagger-ui==3.0.12
