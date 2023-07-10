@@ -17,11 +17,13 @@
         var step = -1;
         var tessError = false;
         var tbaError = false;
+        var briefpost = false;
 
         const lineBreak = 14;
 
         $(document).ready(function(){
             showHideError();
+            showHideBriefpost();
             namespace = '{{ context.mqtt_namespace }}'; // change to an empty string to use the global namespace
             // the socket.io documentation recommends sending an explicit package upon connection
             // this is specially important when using the global namespace
@@ -136,6 +138,9 @@
 
                 $(steps[step]).show();
 
+                adjustFontSize($('.prio'));
+                adjustFontSize($('.text1'));
+
                 if ($('#qr_code').children().length > 0)
                     qr.show();
             }
@@ -202,15 +207,21 @@
             $('.container').hide();
         }
 
-        function showTbaData(data)
+        function removeNotprogrammClasses()
         {
             jQuery.each([$('#location span:first'), $('#prio'), $('#time')], function(i) {
                 if (this.hasClass('notprogramm')) {
                     this.removeClass('notprogramm');
                 }
             });
+        }
+
+        function showTbaData(data)
+        {
+            removeNotprogrammClasses();
 
             showHideError();
+
             $('.container').hide();
             $('#qr').hide();
             $('.tba').show();
@@ -218,27 +229,53 @@
             steps = [];
 
             Object.getOwnPropertyNames(data).forEach(function(val, idx, array) {
-                console.log(val + ' -> ' + data[val]);
+                //console.log(val + ' -> ' + data[val]);
             });
 
             $('#door').html(data.DoorName);
             $('#sector').html(data.Sector);
+
+            if (data.Foreign && data.Foreign.length > 0)
+            {
+                showBriefpost(data.Foreign);
+                return;
+            }
+            else
+            {
+                hideBriefpost();
+            }
+
             setDoorType(data.DoorType);
-            setLocation(data.Location, data.BgColor);
-            setRandgebiet(data.Randgebiet);
+            setLocation(data.Location, data.Randgebiet, data.BgColor);
 
             setQrCode(data.Ident);
 
             setSymbol(data.Symbol);
             
             setPrioAndTime(data.Priority, data.CloseTime);
+            setTour(data.Tour);
+            setTb(data.Tb);
             setRxCapacity(data.RxCapacity);
 
-            setDoorText(data.Text1, data.Text2);
+            setDoorText(data.Text1, data.Text2, data.Comment);
             setAdditionalText(data.AdditionalText1, data.AdditionalText2);
             setGlobalText(data.GlobalText1, data.GlobalText2);
 
             setPlz(data.PlzLeft, data.PlzRight);
+        }
+
+        function setTour(tour)
+        {
+            if (isAuslad())
+            {
+                $('#prio').html(tour).css('background-color', '');
+            }
+        }
+
+        function setTb(tb)
+        {
+            steps.push('#txt_grp_tb');
+            $('#tb').html(tb);
         }
 
         function setTbaEmergencyProgram(data)
@@ -251,7 +288,6 @@
             $('#sector').html(data.Sector);
             setDoorType(data.DoorType);
             setLocation(data.Location);
-            setRandgebiet('');
             setPrioAndTime(data.Priority, data.CloseTime);
             setRxCapacity(null);
             setDoorText('', '');
@@ -266,6 +302,7 @@
             });
         
             $('#prio').text(data.wb_laufzeit).css('background-color', '');
+            $('.prio div').text(data.wb_laufzeit).css('background-color', '');
             $('#img').hide();
             hideDataContent();
             $('#txt_grp1').show();
@@ -273,10 +310,22 @@
 
         function setDoorType(type)
         {
+            console.log(`DoorType: ${type}`);
+
             switch(type) {
-                case "B": $('#top').removeClass('auslad').addClass('einlad'); break;
-                case "E": $('#top').removeAttr('einlad').addClass('auslad'); break;
+                case "B": $('#top').removeClass().addClass('einlad'); break;
+                case "E": $('#top').removeClass().addClass('auslad'); break;
             }
+        }
+
+        function isEinlad()
+        {
+            return $('#top').hasClass('einlad');
+        }
+
+        function isAuslad()
+        {
+            return $('#top').hasClass('auslad');
         }
 
         function setPlz(left, right)
@@ -294,12 +343,32 @@
             if (capacity != null) steps.push('#rx_capacity');
         }
 
-        function setDoorText(text1, text2)
+        function setDoorText(text1, text2, comment)
         {
-            $('#text1').html(text1);
-            $('#text2').html(text2);
+            $('#text1, .text1>span').html(text1);
+            $('#text2, .text2>span').html(comment);
 
-            if ((text1 != null && text1.length > 0) || (text2 != null && text2.length > 0)) steps.push('#txt_grp1');
+            if (isAuslad())
+            {
+                $('#txt_grp_tb > div').css('grid-template-columns', '25% 50% 25%')
+                $('.prio').show();
+            }
+            else
+            {
+                $('.text1').css('font-size', '300px');
+                $('#txt_grp_tb > div').css('grid-template-columns', '25% 75%')
+                $('.prio').hide();
+            }
+
+            steps.push("#txt_grp_tb");
+
+            adjustFontSize($('.text1'));
+
+            if (text2 && text2.length > 0)
+            {
+                $('.text_additional').html(text2);
+                steps.push("#txt_grp_additional");
+            }
         }
 
         function setAdditionalText(text1, text2)
@@ -318,15 +387,22 @@
             if ((text1 != null && text1.length > 0) || (text2 != null && text2.length > 0)) steps.push('#txt_grp3');
         }
 
-        function setLocation(location, bgColor)
+        function setLocation(location, randgebiet, bgColor)
         {
             if (location == null || location.length == 0) {
                 location = '&nbsp;';
             }
 
-            $('#location span:first').html(location);
+            var locationText = location;
 
-            adjustLocationFontSize();
+            if (randgebiet && randgebiet.length > 0)
+            {
+                locationText =  `${randgebiet} via ${location}`;
+            }
+
+            $('#location span:first').html(locationText);
+
+            adjustFontSize($('.text'));
 
             var htmlBgColor = '';
             if (bgColor != null && location != '&nbsp;')
@@ -334,6 +410,19 @@
                 htmlBgColor = '#' + bgColor;
             }
             $('#location span:first').css('background-color', htmlBgColor);
+        }
+
+        function adjustFontSize(element)
+        {
+            console.log(`${element.attr('class')}: div.width: ${element.width()}, span.width: ${element.find('span:first').width()}`);
+
+            if (element.width() == 0) return;
+
+            element.css('font-size', '170px');
+            while (element.find('span:first').width() > element.width())
+            {
+                element.css('font-size', '-=1px');
+            }
         }
 
         function adjustLocationFontSize()
@@ -349,19 +438,6 @@
             }
 
             loc.css('font-size', '-=5px');
-        }
-
-        function setRandgebiet(randgebiet)
-        {
-            var div = $('#randgebiet');
-
-            if (randgebiet == undefined || randgebiet == '')
-                div.hide();
-            else 
-            {
-                div.show();
-                div.html(randgebiet);
-            }
         }
 
         function setQrCode(ident)
@@ -437,7 +513,20 @@
             }
             catch {}
 
-            $('#prio').html(prio).css('background-color', bgColor);
+            if (isAuslad())
+            {
+                $('.prio').show();
+                $('.prio span:first').text(prio);
+                $('.prio').css('background-color', bgColor);
+
+                adjustFontSize($('.prio'));
+            }
+            else if (isEinlad())
+            {
+                $('#prio').html(prio).css('background-color', bgColor);
+                $('.prio').hide();
+            }
+            
             $('#time').html(time);
         }
 
@@ -503,6 +592,24 @@
             $('#error').show();
             $('#cur_time').hide();
         }
+
+        function showHideBriefpost()
+        {
+            hideBriefpost();
+        }
+
+        function showBriefpost(value)
+        {
+            setSymbol(null);
+            $('#top').removeClass().addClass('briefpost');
+            $('#briefpost > span').text(value);
+            $('#briefpost').show();
+        }
+
+        function hideBriefpost()
+        {
+            $('#briefpost').hide();
+        }
     </script>
   
 </head>
@@ -518,7 +625,6 @@
             <div id="location"><span>&nbsp;</span></div>
             <div id="info">
                 <div id="prio">&nbsp;</div>
-                <div id="randgebiet">&nbsp;</div>
                 <div id="time">&nbsp;</div>
             </div>
             <div id="data">
@@ -529,6 +635,17 @@
                 <div id="rx_capacity">
                     <span>RX Kapazität</span>:
                     <span id="rx_value">&nbsp;</span>
+                </div>
+                <div id="txt_grp_tb">
+                    <div>
+                        <div id="tb">&nbsp;</div>
+                        <div class="text1"><span>&nbsp;</span></div>
+                        <div class="prio"><span>&nbsp;</span></div>
+                    </div>
+                    <div id="text2">&nbsp;</div>
+                </div>
+                <div id="txt_grp_additional">
+                    <div class="text_additional">def</div>
                 </div>
                 <!-- Tess Text -->
                 <div id="txt_grp1">
@@ -557,6 +674,9 @@
         <div id="error">
             <span>Error</span>
             <div class="reason">Tess offline</div>
+        </div>
+        <div id="briefpost">
+            <span>&nbsp;</span>
         </div>
     </div>
 

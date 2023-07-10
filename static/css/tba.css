@@ -30,7 +30,7 @@ body, html, .tba {
     overflow: hidden;
 }
 
-#qr, #error {
+#qr, #error, #briefpost {
     background-color:white;
     position: absolute;
     width: 100%;
@@ -117,6 +117,28 @@ body, html, .tba {
     flex: 0 0 40%;
 }
 
+.prio {
+    width: 25%;
+    position: fixed;
+    right: 0;
+    white-space: nowrap;
+    text-align: justify;
+}
+
+#txt_grp_tb > div {
+    display: grid;
+    white-space: nowrap;
+    grid-template-columns: 25% 50% 25%;
+}
+
+#tb {
+    font-size: 0.6em;
+}
+
+.text1 span {
+    white-space: nowrap;
+}
+
 #time {
     flex: 1;
     text-align: right;
@@ -191,4 +213,15 @@ body, html, .tba {
     bottom: 50px;
     height: 50px;
     font-size: 75px;
+}
+
+.briefpost {
+    color:#ffffff;
+    background-color: #7f00ff;
+}
+
+#briefpost {
+    background-color: #ffffff;
+    color:#000000;
+    font-size: 12em;
 }
