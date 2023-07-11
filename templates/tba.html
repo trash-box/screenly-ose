@@ -410,15 +410,17 @@
                 htmlBgColor = '#' + bgColor;
             }
             $('#location span:first').css('background-color', htmlBgColor);
+
+            adjustFontSize($('#location'));
         }
 
         function adjustFontSize(element)
         {
-            console.log(`${element.attr('class')}: div.width: ${element.width()}, span.width: ${element.find('span:first').width()}`);
+            //console.log(`${element.attr('class')}: div.width: ${element.width()}, span.width: ${element.find('span:first').width()}`);
 
             if (element.width() == 0) return;
 
-            element.css('font-size', '170px');
+            element.css('font-size', '');
             while (element.find('span:first').width() > element.width())
             {
                 element.css('font-size', '-=1px');
